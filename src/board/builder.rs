@@ -36,7 +36,10 @@ mod test {
 
     #[test]
     fn ok() {
-        assert!(Builder::new().size(Size { x: 0, y: 0 }).build().is_ok());
+        assert!(Builder::new()
+            .size(Size::new(1, 1).unwrap())
+            .build()
+            .is_ok());
     }
 
     #[test]
