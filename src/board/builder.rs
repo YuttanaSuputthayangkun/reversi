@@ -35,6 +35,11 @@ mod test {
     use super::*;
 
     #[test]
+    fn ok() {
+        assert!(Builder::new().size(Size { x: 0, y: 0 }).build().is_ok());
+    }
+
+    #[test]
     fn missing_size() {
         let result = Builder::new().build();
         assert_eq!(result, BuildResult::Err(BuildError::MissingSize));
