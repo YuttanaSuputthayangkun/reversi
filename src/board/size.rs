@@ -21,6 +21,13 @@ impl Size {
             (x, y) => Ok(Size { x, y }),
         }
     }
+
+    pub fn x(&self) -> usize {
+        self.x
+    }
+    pub fn y(&self) -> usize {
+        self.y
+    }
 }
 
 impl TryFrom<(usize, usize)> for Size {

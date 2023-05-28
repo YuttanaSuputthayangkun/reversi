@@ -10,7 +10,7 @@ pub enum BuildError {
     MissingSize,
 }
 
-pub type BuildResult = Result<Board, BuildError>;
+pub type BuildResult<Cell> = Result<Board<Cell>, BuildError>;
 
 impl Builder {
     pub fn new() -> Self {
@@ -22,10 +22,9 @@ impl Builder {
         self
     }
 
-    pub fn build(self) -> BuildResult {
-        let board = Board {
-            size: self.size.ok_or_else(|| BuildError::MissingSize)?,
-        };
+    pub fn build<Cell: Default>(self) -> BuildResult<Cell> {
+        let size = self.size.ok_or_else(|| BuildError::MissingSize)?;
+        let board = Board::<Cell>::new(size);
         BuildResult::Ok(board)
     }
 }
@@ -38,13 +37,13 @@ mod test {
     fn ok() {
         assert!(Builder::new()
             .size(Size::new(1, 1).unwrap())
-            .build()
+            .build::<()>()
             .is_ok());
     }
 
     #[test]
     fn missing_size() {
-        let result = Builder::new().build();
+        let result = Builder::new().build::<()>();
         assert_eq!(result, BuildResult::Err(BuildError::MissingSize));
     }
 }
