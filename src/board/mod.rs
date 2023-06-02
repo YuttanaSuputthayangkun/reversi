@@ -23,3 +23,17 @@ pub enum Direction {
     Up,
     Down,
 }
+
+impl<Cell> Board<Cell>
+where
+    Cell: Default,
+{
+    pub fn iter_mut(
+        &mut self,
+        pos: BoardPosition,
+        direction: Direction,
+        step: usize,
+    ) -> iterator::IterMut<Cell> {
+        iterator::IterMut::<Cell>::new(self, pos, direction, step)
+    }
+}

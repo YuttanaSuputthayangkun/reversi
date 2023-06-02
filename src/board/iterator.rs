@@ -6,78 +6,68 @@ enum State {
     End,
 }
 
-struct Test<F>
-where
-    F: Fn() -> bool,
-{
-    f: F,
-}
-
-impl<F> Test<F>
-where
-    F: Fn() -> bool,
-{
-    fn call(&self) {
-        (self.f)();
-    }
-}
-
-struct TestBoxFn {
-    pred: Box<dyn Fn() -> bool>,
-}
-
-impl TestBoxFn {
-    fn call(&self) -> bool {
-        (self.pred)()
-    }
-}
-
-struct BoardIterator<'a, Cell>
+pub struct IterMut<'a, Cell>
 where
     Cell: Default,
 {
-    board: &'a Board<Cell>,
+    board: &'a mut Board<Cell>,
     position: BoardPosition,
     direction: Direction,
-    magnitude: usize,
-    cell_predicate: Box<dyn Fn(&'a Cell) -> bool>,
+    step: usize,
     state: State,
 }
 
-impl<'a, Cell: Default> BoardIterator<'a, Cell> {
+impl<'a, Cell> IterMut<'a, Cell>
+where
+    Cell: Default,
+{
     pub fn new(
-        board: &'a Board<Cell>,
+        board: &'a mut Board<Cell>,
         pos: BoardPosition,
         direction: Direction,
-        cell_predicate: Box<dyn Fn(&'a Cell) -> bool>,
-    ) -> BoardIterator<'a, Cell> {
-        BoardIterator {
+        step: usize,
+    ) -> IterMut<'a, Cell> {
+        IterMut {
             board: board,
             position: pos,
             direction,
-            magnitude: 1, // add an option to this later
-            cell_predicate: cell_predicate,
+            step: step,
             state: State::NotStarted,
         }
     }
 
-    fn current_cell(&self) -> Option<&'a Cell> {
-        let cell = self.board.cell_ref(&self.position)?;
-        (self.cell_predicate)(cell).then_some(cell)
+    fn cell_mut(&mut self, pos: &BoardPosition) -> Option<&mut Cell> {
+        self.board.cell_mut(pos)
+    }
+
+    fn current_cell_mut(&mut self) -> Option<&mut Cell> {
+        self.board.cell_mut(&self.position)
     }
 }
 
-impl<'a, Cell: Default> Iterator for BoardIterator<'a, Cell> {
-    type Item = &'a Cell;
+impl<'a, Cell> Iterator for IterMut<'a, Cell>
+where
+    Cell: Default,
+{
+    type Item = &'a mut Cell;
 
     fn next(&mut self) -> Option<Self::Item> {
         use State::*;
         match &self.state {
-            NotStarted => self.current_cell(),
+            NotStarted => {
+                self.state = Started;
+                let result = self.current_cell_mut();
+                result.map(|c| unsafe { &mut *(c as *mut Cell) })
+            }
             Started => {
-                self.position
-                    .apply_direction(&self.direction, self.magnitude);
-                self.current_cell()
+                self.position.apply_direction(&self.direction, self.step);
+                let result = self
+                    .current_cell_mut()
+                    .map(|c| unsafe { &mut *(c as *mut Cell) });
+                if result.is_none() {
+                    self.state = End;
+                }
+                result
             }
             End => None,
         }
@@ -86,6 +76,14 @@ impl<'a, Cell: Default> Iterator for BoardIterator<'a, Cell> {
 
 #[cfg(test)]
 mod test {
+    use crate::board::*;
     #[test]
-    fn up() {}
+    fn up() {
+        let size: Size = (1, 2).try_into().unwrap();
+        let mut board = Board::<()>::new(size);
+        let mut iter = IterMut::new(&mut board, BoardPosition { x: 0, y: 0 }, Direction::Up, 1);
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_none());
+    }
 }
