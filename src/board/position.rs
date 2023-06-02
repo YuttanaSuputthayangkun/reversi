@@ -26,3 +26,12 @@ impl AddAssign<(&Direction, Position)> for BoardPosition {
         self.apply_direction(rhs.0, rhs.1)
     }
 }
+
+impl From<(usize, usize)> for BoardPosition {
+    fn from(value: (usize, usize)) -> Self {
+        BoardPosition {
+            x: value.0,
+            y: value.1,
+        }
+    }
+}

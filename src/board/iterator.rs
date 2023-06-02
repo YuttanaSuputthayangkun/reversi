@@ -1,6 +1,8 @@
 use super::{Board, BoardPosition, Direction};
 
+#[derive(Default)]
 enum State {
+    #[default]
     NotStarted,
     Started,
     End,
@@ -76,6 +78,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
+
     use crate::board::*;
     #[test]
     fn up() {
@@ -85,5 +89,24 @@ mod test {
         assert!(iter.next().is_some());
         assert!(iter.next().is_some());
         assert!(iter.next().is_none());
+    }
+
+    #[test]
+    fn mutate() {
+        type Cell = Option<()>;
+        let size: Size = (1, 2).try_into().unwrap();
+        let mut board = Board::<Cell>::new(size);
+        let iter = IterMut::new(&mut board, BoardPosition { x: 0, y: 0 }, Direction::Up, 1);
+        iter.for_each(|c| *c = Some(()));
+        let board2 = Board {
+            size: size.clone(),
+            cells: {
+                let mut map = HashMap::<BoardPosition, Cell>::new();
+                map.insert((0, 0).into(), Some(()));
+                map.insert((0, 1).into(), Some(()));
+                map
+            },
+        };
+        assert_eq!(board, board2);
     }
 }

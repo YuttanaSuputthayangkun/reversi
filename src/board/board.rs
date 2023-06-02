@@ -8,9 +8,10 @@ pub struct Board<Cell>
 where
     Cell: Default,
 {
-    size: Size,
-    cells: HashMap<BoardPosition, Cell>,
+    pub(crate) size: Size,
+    pub(crate) cells: HashMap<BoardPosition, Cell>,
 }
+
 impl<Cell: Default> Board<Cell> {
     pub fn new<S: Into<Size>>(s: S) -> Self {
         let mut cells = HashMap::new();
