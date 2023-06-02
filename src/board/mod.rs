@@ -22,6 +22,10 @@ pub enum Direction {
     Right,
     Up,
     Down,
+    UpLeft,
+    UpRight,
+    DownLeft,
+    DownRight,
 }
 
 impl<Cell> Board<Cell>
