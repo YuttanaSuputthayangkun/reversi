@@ -4,6 +4,9 @@ mod iterator;
 mod position;
 mod size;
 
+#[cfg(test)]
+mod test;
+
 pub use board::*;
 pub use builder::*;
 pub use iterator::*;
