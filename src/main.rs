@@ -24,6 +24,20 @@ const CELL_COLOR_HOVERED: Color = Color::Rgba {
     alpha: 1.,
 };
 
+#[cfg(test)]
+mod test {
+    use bevy::prelude::{Event, World};
+
+    #[derive(Event)]
+    struct Number(i32);
+
+    #[test]
+    fn world() {
+        // let mut world = World::new();
+        // world.world.send_event(Number(5));
+    }
+}
+
 fn main() {
     // setup_example();
     setup_game();
@@ -32,8 +46,14 @@ fn main() {
 #[derive(Component)]
 struct BoardPositionComponent(BoardPosition);
 
-#[derive(Component)]
-struct ClickedComponent;
+#[derive(Event)]
+struct CellClicked(BoardPosition);
+
+fn position_pairs() -> impl Iterator<Item = (u16, u16)> {
+    (0..BOARD_SIZE_Y)
+        .map(|y| (0..BOARD_SIZE_X).map(move |x| (x, y)))
+        .flat_map(|x| x)
+}
 
 fn setup_game() {
     App::new()
@@ -46,7 +66,8 @@ fn setup_game() {
             ..default()
         }))
         .add_systems(Startup, spawn_board_ui)
-        .add_systems(Update, button_system)
+        .add_systems(Update, (button_system, read_event_system))
+        .add_event::<CellClicked>()
         .run();
 }
 
@@ -87,10 +108,7 @@ fn spawn_board_ui(mut commands: Commands) {
                     ..default()
                 })
                 .with_children(|builder| {
-                    let pos_pairs = (0..BOARD_SIZE_X)
-                        .map(|x| (0..BOARD_SIZE_Y).map(move |y| (x, y)))
-                        .flat_map(|x| x);
-                    for (x, y) in pos_pairs {
+                    for (x, y) in position_pairs() {
                         let pos = BoardPosition {
                             x: x.into(),
                             y: y.into(),
@@ -116,19 +134,35 @@ fn spawn_cell(builder: &mut ChildBuilder, pos: BoardPosition) {
 
 fn button_system(
     mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
+        (&Interaction, &mut BackgroundColor, &BoardPositionComponent),
+        (
+            Changed<Interaction>,
+            With<Button>,
+            With<BoardPositionComponent>,
+        ),
     >,
+    mut event_writer: EventWriter<CellClicked>,
 ) {
-    for (interaction, mut color) in &mut interaction_query {
+    for (interaction, mut color, board_pos) in &mut interaction_query {
         match *interaction {
             Interaction::Hovered => {
                 *color = CELL_COLOR_HOVERED.into();
             }
-            _ => {
+            other => {
                 *color = CELL_COLOR.into();
+
+                if other == Interaction::Pressed {
+                    let event = CellClicked(board_pos.0);
+                    event_writer.send(event);
+                }
             }
         }
+    }
+}
+
+fn read_event_system(mut event_reader: EventReader<CellClicked>) {
+    for e in event_reader.iter() {
+        info!("CellClicked {:?}", e.0);
     }
 }
 
