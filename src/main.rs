@@ -43,6 +43,12 @@ fn main() {
     setup_game();
 }
 
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+enum GameSystemSet {
+    Game,
+    Result,
+}
+
 #[derive(Component)]
 struct BoardPositionComponent(BoardPosition);
 
@@ -66,7 +72,15 @@ fn setup_game() {
             ..default()
         }))
         .add_systems(Startup, spawn_board_ui)
-        .add_systems(Update, (button_system, read_event_system))
+        .configure_sets(
+            Startup,
+            (GameSystemSet::Game, GameSystemSet::Result).chain(),
+        )
+        .configure_sets(Update, (GameSystemSet::Game, GameSystemSet::Result).chain())
+        .add_systems(
+            Update,
+            (button_system, read_event_system).in_set(GameSystemSet::Game),
+        )
         .add_event::<CellClicked>()
         .run();
 }
