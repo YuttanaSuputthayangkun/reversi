@@ -25,16 +25,27 @@ const CELL_COLOR_HOVERED: Color = Color::Rgba {
 };
 
 #[cfg(test)]
-mod test {
-    use bevy::prelude::{Event, World};
+mod bevy_test {
+    use bevy::prelude::{Event, ResMut, Resource, Schedule, Schedules, Update, World};
 
     #[derive(Event)]
     struct Number(i32);
 
     #[test]
     fn world() {
-        // let mut world = World::new();
-        // world.world.send_event(Number(5));
+        #[derive(Resource)]
+        struct MyResource(i32);
+        let mut world = World::new();
+        world.insert_resource(MyResource(0));
+        let mut schedule = Schedule::new();
+        fn increase_number(mut res: ResMut<MyResource>) {
+            res.0 = res.0 + 1;
+        }
+        schedule.add_systems(increase_number);
+        schedule.run(&mut world);
+        assert_eq!(1, world.get_resource::<MyResource>().unwrap().0);
+        schedule.run(&mut world);
+        assert_eq!(2, world.get_resource::<MyResource>().unwrap().0);
     }
 }
 
@@ -43,10 +54,29 @@ fn main() {
     setup_game();
 }
 
-#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
-enum GameSystemSet {
+enum Turn {
+    Black,
+    White,
+}
+
+struct TurnData {
+    turn: Turn,
+}
+
+#[derive(SystemSet, States, Debug, Hash, PartialEq, Eq, Clone, Default)]
+enum GameState {
+    #[default]
     Game,
     Result,
+}
+
+impl GameState {
+    fn next(&self) -> Self {
+        match self {
+            GameState::Game => GameState::Result,
+            GameState::Result => GameState::Game,
+        }
+    }
 }
 
 #[derive(Component)]
@@ -71,15 +101,16 @@ fn setup_game() {
             }),
             ..default()
         }))
-        .add_systems(Startup, spawn_board_ui)
-        .configure_sets(
-            Startup,
-            (GameSystemSet::Game, GameSystemSet::Result).chain(),
-        )
-        .configure_sets(Update, (GameSystemSet::Game, GameSystemSet::Result).chain())
+        .add_state::<GameState>()
+        // .add_systems(Startup, spawn_board_ui)
+        .add_systems(OnEnter(GameState::Game), spawn_board_ui)
+        .configure_sets(Startup, (GameState::Game, GameState::Result).chain())
+        .configure_sets(Update, (GameState::Game, GameState::Result).chain())
         .add_systems(
             Update,
-            (button_system, read_event_system).in_set(GameSystemSet::Game),
+            (button_system, read_event_system)
+                .in_set(GameState::Game)
+                .run_if(in_state(GameState::Game)),
         )
         .add_event::<CellClicked>()
         .run();
