@@ -62,6 +62,19 @@ struct BoardPositionComponent(BoardPosition);
 #[derive(Event)]
 struct CellClicked(BoardPosition);
 
+#[derive(Resource)]
+struct BoardResource {
+    entity_list: Vec<Entity>,
+}
+
+impl Default for BoardResource {
+    fn default() -> Self {
+        Self {
+            entity_list: Vec::new(),
+        }
+    }
+}
+
 fn position_pairs() -> impl Iterator<Item = (u16, u16)> {
     (0..BOARD_SIZE_Y)
         .map(|y| (0..BOARD_SIZE_X).map(move |x| (x, y)))
@@ -79,8 +92,9 @@ fn setup_game() {
             ..default()
         }))
         .add_state::<GameState>()
-        // .add_systems(Startup, spawn_board_ui)
+        .insert_resource(BoardResource::default())
         .add_systems(OnEnter(GameState::Game), spawn_board_ui)
+        .add_systems(OnExit(GameState::Game), despawn_board_ui)
         .configure_sets(Startup, (GameState::Game, GameState::Result).chain())
         .configure_sets(Update, (GameState::Game, GameState::Result).chain())
         .add_systems(
@@ -93,9 +107,10 @@ fn setup_game() {
         .run();
 }
 
-fn spawn_board_ui(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
-    commands
+fn spawn_board_ui(mut commands: Commands, mut board_resource: ResMut<BoardResource>) {
+    let camera = commands.spawn(Camera2dBundle::default()).id();
+    board_resource.entity_list.push(camera);
+    let board = commands
         .spawn(NodeBundle {
             style: Style {
                 display: Display::Grid,
@@ -133,7 +148,9 @@ fn spawn_board_ui(mut commands: Commands) {
                         spawn_cell(builder, pos);
                     }
                 });
-        });
+        })
+        .id();
+    board_resource.entity_list.push(board);
 }
 
 fn spawn_cell(builder: &mut ChildBuilder, pos: BoardPosition) {
@@ -147,6 +164,12 @@ fn spawn_cell(builder: &mut ChildBuilder, pos: BoardPosition) {
             ..default()
         })
         .insert(BoardPositionComponent(pos));
+}
+
+fn despawn_board_ui(mut commands: Commands, board_resource: Res<BoardResource>) {
+    for id in board_resource.entity_list.iter() {
+        commands.entity(id.clone()).despawn_recursive();
+    }
 }
 
 fn button_system(
