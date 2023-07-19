@@ -15,14 +15,6 @@ pub struct GamePlugin {
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        // app.add_plugins(DefaultPlugins.set(WindowPlugin {
-        //     primary_window: Some(Window {
-        //         resolution: [self.window_resolution_x, self.window_resolution_y].into(),
-        //         title: self.title,
-        //         ..default()
-        //     }),
-        //     ..default()
-        // }))
         app.insert_resource(BoardResource::from(self))
             .add_systems(OnEnter(GameState::Game), spawn_board_ui)
             .add_systems(OnExit(GameState::Game), despawn_board_ui)
@@ -130,7 +122,7 @@ fn spawn_board_ui(mut commands: Commands, mut board_resource: ResMut<BoardResour
 }
 
 fn spawn_cell(builder: &mut ChildBuilder, pos: BoardPosition, board_resource: &BoardResource) {
-    let cell = builder
+    builder
         .spawn(ButtonBundle {
             style: Style {
                 aspect_ratio: Some(1.0),

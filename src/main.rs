@@ -1,5 +1,3 @@
-#![allow(dead_code, unused_variables)]
-
 #[allow(dead_code)]
 mod board;
 mod game_state;
@@ -8,7 +6,6 @@ mod game_state;
 mod bevy_test;
 
 use bevy::prelude::*;
-use board::BoardPosition;
 use game_state::{plugin::GamePlugin, GameStatePlugin};
 
 const GAME_TITLE: &'static str = "Reversi";
@@ -37,34 +34,6 @@ const BACKGROUND_COLOR: Color = Color::Rgba {
 
 fn main() {
     setup_game();
-}
-
-enum Turn {
-    Black,
-    White,
-}
-
-struct TurnData {
-    turn: Turn,
-}
-
-#[derive(Component)]
-struct BoardPositionComponent(BoardPosition);
-
-#[derive(Event)]
-struct CellClicked(BoardPosition);
-
-#[derive(Resource)]
-struct BoardResource {
-    entity_list: Vec<Entity>,
-}
-
-impl Default for BoardResource {
-    fn default() -> Self {
-        Self {
-            entity_list: Vec::new(),
-        }
-    }
 }
 
 fn setup_game() {
