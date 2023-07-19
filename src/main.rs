@@ -26,7 +26,7 @@ const CELL_COLOR_HOVERED: Color = Color::Rgba {
 
 #[cfg(test)]
 mod bevy_test {
-    use bevy::prelude::{Event, EventReader, Events, First, ResMut, Resource, Schedule, World};
+    use bevy::prelude::{Event, EventReader, Events, ResMut, Resource, Schedule, World};
 
     #[derive(Event)]
     struct Number(i32);
@@ -158,13 +158,8 @@ fn spawn_board_ui(mut commands: Commands) {
                 display: Display::Grid,
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center, // check this
-                grid_template_columns: vec![
-                    GridTrack::flex(1.), // left
-                    GridTrack::auto(),   // board
-                    GridTrack::flex(1.), // right
-                ],
+                justify_content: JustifyContent::Center,
+                grid_template_columns: vec![GridTrack::max_content()],
                 ..default()
             },
             background_color: Color::GRAY.into(),
@@ -175,11 +170,11 @@ fn spawn_board_ui(mut commands: Commands) {
                 .spawn(NodeBundle {
                     style: Style {
                         display: Display::Grid,
-                        justify_content: JustifyContent::Center, // check this
+                        justify_content: JustifyContent::Center,
                         aspect_ratio: Some(1.0),
-                        padding: UiRect::all(Val::Px(10.)),
-                        column_gap: Val::Px(5.),
-                        row_gap: Val::Px(5.),
+                        padding: UiRect::all(Val::Percent(1.)),
+                        column_gap: Val::Percent(1.),
+                        row_gap: Val::Percent(1.),
                         grid_template_columns: RepeatedGridTrack::flex(BOARD_SIZE_Y, 1.0),
                         grid_template_rows: RepeatedGridTrack::flex(BOARD_SIZE_X, 1.0),
                         ..default()
