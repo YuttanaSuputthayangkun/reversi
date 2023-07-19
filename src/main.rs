@@ -170,6 +170,7 @@ fn despawn_board_ui(mut commands: Commands, board_resource: Res<BoardResource>) 
     for id in board_resource.entity_list.iter() {
         commands.entity(id.clone()).despawn_recursive();
     }
+    commands.remove_resource::<BoardResource>();
 }
 
 fn button_system(
