@@ -11,6 +11,7 @@ use game::GamePlugin;
 pub mod plugin {
     pub use super::GameStatePlugin;
     use super::*;
+    pub use game::BoardSettings;
     pub use game::GamePlugin;
 }
 

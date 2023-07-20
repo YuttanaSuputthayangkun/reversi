@@ -6,16 +6,12 @@ use super::{position_pairs, GameState};
 
 #[derive(Clone)]
 pub struct GamePlugin {
-    pub board_size_x: u16,
-    pub board_size_y: u16,
-    pub cell_color: Color,
-    pub cell_hovered_color: Color,
-    pub background_color: Color,
+    pub board_settings: BoardSettings,
 }
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(BoardResource::from(self))
+        app.insert_resource(self.board_settings.clone())
             .add_systems(OnEnter(GameState::Game), spawn_board_ui)
             .add_systems(OnExit(GameState::Game), despawn_board_ui)
             .add_systems(
@@ -24,6 +20,15 @@ impl Plugin for GamePlugin {
             )
             .add_event::<CellClicked>();
     }
+}
+
+#[derive(Resource, Clone)]
+pub struct BoardSettings {
+    pub board_size_x: u16,
+    pub board_size_y: u16,
+    pub cell_color: Color,
+    pub cell_hovered_color: Color,
+    pub background_color: Color,
 }
 
 #[allow(dead_code)]
@@ -43,32 +48,15 @@ struct BoardPositionComponent(BoardPosition);
 #[derive(Event)]
 struct CellClicked(BoardPosition);
 
-#[derive(Resource)]
-struct BoardResource {
+#[derive(Resource, Default)]
+struct BoardEntityList {
     entity_list: Vec<Entity>,
-    board_size_x: u16,
-    board_size_y: u16,
-    cell_color: Color,
-    cell_hovered_color: Color,
-    background_color: Color,
 }
 
-impl<'a> From<&'a GamePlugin> for BoardResource {
-    fn from(value: &'a GamePlugin) -> Self {
-        BoardResource {
-            entity_list: vec![],
-            board_size_x: value.board_size_x,
-            board_size_y: value.board_size_y,
-            cell_color: value.cell_color,
-            cell_hovered_color: value.cell_hovered_color,
-            background_color: value.background_color,
-        }
-    }
-}
-
-fn spawn_board_ui(mut commands: Commands, mut board_resource: ResMut<BoardResource>) {
+fn spawn_board_ui(mut commands: Commands, board_settings: Res<BoardSettings>) {
+    let mut board_entity_list = BoardEntityList::default();
     let camera = commands.spawn(Camera2dBundle::default()).id();
-    board_resource.entity_list.push(camera);
+    board_entity_list.entity_list.push(camera);
     let board = commands
         .spawn(NodeBundle {
             style: Style {
@@ -93,11 +81,11 @@ fn spawn_board_ui(mut commands: Commands, mut board_resource: ResMut<BoardResour
                         column_gap: Val::Percent(1.),
                         row_gap: Val::Percent(1.),
                         grid_template_columns: RepeatedGridTrack::flex(
-                            board_resource.board_size_y,
+                            board_settings.board_size_y,
                             1.0,
                         ),
                         grid_template_rows: RepeatedGridTrack::flex(
-                            board_resource.board_size_x,
+                            board_settings.board_size_x,
                             1.0,
                         ),
                         ..default()
@@ -106,38 +94,39 @@ fn spawn_board_ui(mut commands: Commands, mut board_resource: ResMut<BoardResour
                 })
                 .with_children(|builder| {
                     for (x, y) in
-                        position_pairs(board_resource.board_size_x, board_resource.board_size_y)
+                        position_pairs(board_settings.board_size_x, board_settings.board_size_y)
                     {
                         let pos = BoardPosition {
                             x: x.into(),
                             y: y.into(),
                         };
-                        spawn_cell(builder, pos, &board_resource);
+                        spawn_cell(builder, pos, &board_settings);
                     }
                 });
         })
         .id();
-    board_resource.entity_list.push(board);
+    board_entity_list.entity_list.push(board);
+    commands.insert_resource(board_entity_list);
 }
 
-fn spawn_cell(builder: &mut ChildBuilder, pos: BoardPosition, board_resource: &BoardResource) {
+fn spawn_cell(builder: &mut ChildBuilder, pos: BoardPosition, board_settings: &BoardSettings) {
     builder
         .spawn(ButtonBundle {
             style: Style {
                 aspect_ratio: Some(1.0),
                 ..default()
             },
-            background_color: board_resource.background_color.into(),
+            background_color: board_settings.background_color.into(),
             ..default()
         })
         .insert(BoardPositionComponent(pos));
 }
 
-fn despawn_board_ui(mut commands: Commands, mut board_resource: ResMut<BoardResource>) {
-    for id in board_resource.entity_list.iter() {
+fn despawn_board_ui(mut commands: Commands, board_entity_list: Res<BoardEntityList>) {
+    for id in board_entity_list.entity_list.iter() {
         commands.entity(id.clone()).despawn_recursive();
     }
-    board_resource.entity_list.clear();
+    commands.remove_resource::<BoardEntityList>();
 }
 
 fn button_system(
@@ -150,15 +139,15 @@ fn button_system(
         ),
     >,
     mut event_writer: EventWriter<CellClicked>,
-    board_resource: Res<BoardResource>,
+    board_settings: Res<BoardSettings>,
 ) {
     for (interaction, mut color, board_pos) in &mut interaction_query {
         match *interaction {
             Interaction::Hovered => {
-                *color = board_resource.cell_hovered_color.into();
+                *color = board_settings.cell_hovered_color.into();
             }
             other => {
-                *color = board_resource.cell_color.into();
+                *color = board_settings.cell_color.into();
 
                 if other == Interaction::Pressed {
                     let event = CellClicked(board_pos.0);

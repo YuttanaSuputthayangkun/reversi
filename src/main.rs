@@ -6,7 +6,10 @@ mod game_state;
 mod bevy_test;
 
 use bevy::prelude::*;
-use game_state::{plugin::GamePlugin, GameStatePlugin};
+use game_state::{
+    plugin::{BoardSettings, GamePlugin},
+    GameStatePlugin,
+};
 
 const GAME_TITLE: &'static str = "Reversi";
 const WINDOW_RESOLUTION_X: f32 = 1280.;
@@ -48,11 +51,13 @@ fn setup_game() {
         }))
         .add_plugins(GameStatePlugin {
             game_plugin: GamePlugin {
-                board_size_x: BOARD_SIZE_X,
-                board_size_y: BOARD_SIZE_Y,
-                cell_color: CELL_COLOR,
-                cell_hovered_color: CELL_HOVERED_COLOR,
-                background_color: BACKGROUND_COLOR,
+                board_settings: BoardSettings {
+                    board_size_x: BOARD_SIZE_X,
+                    board_size_y: BOARD_SIZE_Y,
+                    cell_color: CELL_COLOR,
+                    cell_hovered_color: CELL_HOVERED_COLOR,
+                    background_color: BACKGROUND_COLOR,
+                },
             },
         })
         .run();
