@@ -1,11 +1,5 @@
-use std::ops::Deref;
-
-use bevy::{
-    prelude::{
-        info, Input, KeyCode, Local, NextState, Plugin, Res, ResMut, Startup, States, SystemSet,
-        Update,
-    },
-    DefaultPlugins,
+use bevy::prelude::{
+    info, Input, KeyCode, Local, NextState, Plugin, Res, ResMut, Startup, States, Update,
 };
 
 mod game;

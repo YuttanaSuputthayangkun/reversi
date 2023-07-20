@@ -25,11 +25,14 @@ impl Plugin for GamePlugin {
             .add_event::<CellClicked>();
     }
 }
+
+#[allow(dead_code)]
 enum Turn {
     Black,
     White,
 }
 
+#[allow(dead_code)]
 struct TurnData {
     turn: Turn,
 }
