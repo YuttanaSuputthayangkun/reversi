@@ -18,13 +18,9 @@ impl Plugin for GamePlugin {
         app.insert_resource(BoardResource::from(self))
             .add_systems(OnEnter(GameState::Game), spawn_board_ui)
             .add_systems(OnExit(GameState::Game), despawn_board_ui)
-            .configure_sets(Startup, (GameState::Game, GameState::Result).chain())
-            .configure_sets(Update, (GameState::Game, GameState::Result).chain())
             .add_systems(
                 Update,
-                (button_system, read_event_system)
-                    .in_set(GameState::Game)
-                    .run_if(in_state(GameState::Game)),
+                (button_system, read_event_system).run_if(in_state(GameState::Game)),
             )
             .add_event::<CellClicked>();
     }
@@ -134,11 +130,11 @@ fn spawn_cell(builder: &mut ChildBuilder, pos: BoardPosition, board_resource: &B
         .insert(BoardPositionComponent(pos));
 }
 
-fn despawn_board_ui(mut commands: Commands, board_resource: Res<BoardResource>) {
+fn despawn_board_ui(mut commands: Commands, mut board_resource: ResMut<BoardResource>) {
     for id in board_resource.entity_list.iter() {
         commands.entity(id.clone()).despawn_recursive();
     }
-    commands.remove_resource::<BoardResource>();
+    board_resource.entity_list.clear();
 }
 
 fn button_system(
