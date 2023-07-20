@@ -44,7 +44,7 @@ mod resource {
 
     #[derive(Resource, Default)]
     pub struct BoardEntityList {
-        pub(super) entity_list: Vec<Entity>,
+        pub entity_list: Vec<Entity>,
     }
 
     #[allow(dead_code)]
