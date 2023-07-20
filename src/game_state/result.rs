@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+pub use event::{ResultData, ResultEvent};
 pub use plugin::ResultPlugin;
 
 use super::GameState;
