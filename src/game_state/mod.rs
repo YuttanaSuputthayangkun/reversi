@@ -1,6 +1,4 @@
-use bevy::prelude::{
-    info, Input, KeyCode, Local, NextState, Plugin, Res, ResMut, Startup, States, Update,
-};
+use bevy::prelude::{Plugin, States};
 
 mod game;
 mod result;
@@ -23,10 +21,8 @@ impl Plugin for GameStatePlugin {
             .add_plugins(self.game_plugin.clone())
             .add_plugins(result::ResultPlugin);
 
-        if cfg!(feature = "debug") {
-            app.add_systems(Startup, || info!("Debug mode enabled."))
-                .add_systems(Update, debug::next_debug_state_on_keyboard_press);
-        }
+        #[cfg(feature = "debug")]
+        debug::add_plugin(app);
     }
 }
 
@@ -52,10 +48,10 @@ mod debug {
     use super::*;
     use bevy::prelude::*;
 
-    pub(super) const DEBUG_KEYCODE: KeyCode = KeyCode::P;
+    const DEBUG_KEYCODE: KeyCode = KeyCode::P;
 
     #[derive(Default)]
-    pub(super) struct DebugGameState;
+    struct DebugGameState;
 
     impl DebugGameState {
         fn next(&self, game_state: &GameState) -> GameState {
@@ -66,7 +62,12 @@ mod debug {
         }
     }
 
-    pub(super) fn next_debug_state_on_keyboard_press(
+    pub(super) fn add_plugin(app: &mut App) {
+        app.add_systems(Startup, || info!("Debug mode enabled."))
+            .add_systems(Update, debug::next_debug_state_on_keyboard_press);
+    }
+
+    fn next_debug_state_on_keyboard_press(
         keyboard_input: Res<Input<KeyCode>>,
         current_game_state: Res<State<GameState>>,
         mut next_game_state: ResMut<NextState<GameState>>,
