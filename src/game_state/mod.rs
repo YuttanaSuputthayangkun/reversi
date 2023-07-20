@@ -22,7 +22,7 @@ impl Plugin for GameStatePlugin {
             .add_plugins(result::ResultPlugin);
 
         #[cfg(feature = "debug")]
-        debug::add_plugin(app);
+        debug::add_debug(app);
     }
 }
 
@@ -62,7 +62,7 @@ mod debug {
         }
     }
 
-    pub(super) fn add_plugin(app: &mut App) {
+    pub(super) fn add_debug(app: &mut App) {
         app.add_systems(Startup, || info!("Debug mode enabled."))
             .add_systems(Update, debug::next_debug_state_on_keyboard_press);
     }
