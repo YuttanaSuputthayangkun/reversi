@@ -1,4 +1,6 @@
-use bevy::prelude::{Event, EventReader, Events, ResMut, Resource, Schedule, World};
+use bevy::prelude::{
+    Event, EventReader, Events, In, IntoSystem, ResMut, Resource, Schedule, World,
+};
 
 #[derive(Event)]
 struct Number(i32);
@@ -52,4 +54,27 @@ fn read_event_twice() {
     world.send_event(Event);
     schedule.run(&mut world);
     assert_eq!(2, world.get_resource::<Counter>().unwrap().0);
+}
+
+#[test]
+fn test_piping() {
+    #[derive(Resource, Default)]
+    struct MyNum(Option<i32>);
+
+    let mut world = World::new();
+    world.init_resource::<MyNum>();
+    let mut schedule = Schedule::new();
+
+    fn base_system() -> i32 {
+        1234
+    }
+    fn update_my_num(In(num): In<i32>, mut my_num: ResMut<MyNum>) {
+        *my_num = MyNum(Some(num));
+    }
+
+    schedule.add_systems(base_system.pipe(update_my_num));
+    schedule.run(&mut world);
+
+    let resource = world.get_resource::<MyNum>();
+    matches!(resource, Some(&MyNum(Some(1234))));
 }
