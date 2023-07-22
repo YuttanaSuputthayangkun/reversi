@@ -5,6 +5,7 @@ use crate::board::BoardPosition;
 pub use plugin::GamePlugin;
 pub use resource::BoardSettings;
 
+use super::util::{despawn_entities_and_clear_resource, IterEntity};
 use super::{position_pairs, GameState};
 
 mod plugin {
@@ -19,7 +20,10 @@ mod plugin {
         fn build(&self, app: &mut bevy::prelude::App) {
             app.insert_resource(self.board_settings.clone())
                 .add_systems(OnEnter(GameState::Game), system::spawn_board_ui)
-                .add_systems(OnExit(GameState::Game), system::despawn_board_ui)
+                .add_systems(
+                    OnExit(GameState::Game),
+                    despawn_entities_and_clear_resource::<resource::BoardEntityList>,
+                )
                 .add_systems(
                     Update,
                     (system::button_system, system::read_event_system)
@@ -43,8 +47,13 @@ mod resource {
     }
 
     #[derive(Resource, Default)]
-    pub struct BoardEntityList {
-        pub entity_list: Vec<Entity>,
+    pub struct BoardEntityList(pub Vec<Entity>);
+
+    impl IterEntity for BoardEntityList {
+        fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
+            let iter = self.0.iter().map(|x| x.clone());
+            Box::new(iter)
+        }
     }
 
     #[allow(dead_code)]
@@ -79,7 +88,7 @@ mod system {
     pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::BoardSettings>) {
         let mut board_entity_list = resource::BoardEntityList::default();
         let camera = commands.spawn(Camera2dBundle::default()).id();
-        board_entity_list.entity_list.push(camera);
+        board_entity_list.0.push(camera);
         let board = commands
             .spawn(NodeBundle {
                 style: Style {
@@ -128,7 +137,7 @@ mod system {
                     });
             })
             .id();
-        board_entity_list.entity_list.push(board);
+        board_entity_list.0.push(board);
         commands.insert_resource(board_entity_list);
     }
 
@@ -147,16 +156,6 @@ mod system {
                 ..default()
             })
             .insert(component::BoardPositionComponent(pos));
-    }
-
-    pub fn despawn_board_ui(
-        mut commands: Commands,
-        board_entity_list: Res<resource::BoardEntityList>,
-    ) {
-        for id in board_entity_list.entity_list.iter() {
-            commands.entity(id.clone()).despawn_recursive();
-        }
-        commands.remove_resource::<resource::BoardEntityList>();
     }
 
     pub fn button_system(
