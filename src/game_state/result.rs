@@ -53,7 +53,7 @@ mod resource {
     pub struct UiEntityList(pub Vec<Entity>);
 
     impl IterEntity for UiEntityList {
-        fn iter(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
+        fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
             let iter = self.0.iter().map(|x| x.clone());
             Box::new(iter)
         }
