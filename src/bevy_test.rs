@@ -78,3 +78,53 @@ fn test_piping() {
     let resource = world.get_resource::<MyNum>();
     matches!(resource, Some(&MyNum(Some(1234))));
 }
+
+// #[test]
+fn test_pipe_chain() {
+    #![allow(dead_code, unused_mut, unused_variables, unreachable_code)]
+
+    use bevy::prelude::*;
+    use std::ops::{Deref, DerefMut};
+
+    #[derive(Resource, Default, Deref, DerefMut, PartialEq, Eq)]
+    struct PipeResource1(#[deref] i32);
+
+    #[derive(Resource, Default, Deref, DerefMut, PartialEq, Eq)]
+    struct PipeResource2(#[deref] i32);
+
+    let mut world = World::new();
+    world.init_resource::<PipeResource1>();
+    world.init_resource::<PipeResource2>();
+    let mut schedule = Schedule::new();
+
+    fn system_base() -> i32 {
+        1
+    }
+
+    fn piped_in<Resource>(In(num): In<i32>, mut res: ResMut<Resource>)
+    where
+        Resource: bevy::prelude::Resource + Deref<Target = i32> + DerefMut,
+    {
+        **res = num;
+    }
+
+    matches!(world.get_resource::<PipeResource1>(), None);
+    matches!(world.get_resource::<PipeResource2>(), None);
+
+    //find a way to create system set with In<PipeResource>
+
+    // schedule.add_systems(piped_in::<PipeResource1>);
+    // schedule.add_systems(system_base.pipe(piped_in::<PipeResource1>));
+    // let piped = BoxedSystem::new((piped_in::<PipeResource1>, piped_in::<PipeResource2>).chain());
+    // schedule.add_systems(system_base.pipe(piped));
+    schedule.run(&mut world);
+
+    matches!(
+        world.get_resource::<PipeResource1>(),
+        Some(&PipeResource1(1))
+    );
+    matches!(
+        world.get_resource::<PipeResource2>(),
+        Some(&PipeResource2(2))
+    );
+}
