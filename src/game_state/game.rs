@@ -27,11 +27,20 @@ mod plugin {
                 )
                 .add_systems(
                     Update,
-                    (system::button_system, system::read_event_system)
+                    system::button_interaction_system
+                        .pipe(system::handle_button_interaction)
                         .run_if(in_state(GameState::Game)),
-                )
-                .add_event::<event::CellClicked>();
+                );
         }
+    }
+}
+
+mod data {
+    use super::*;
+
+    #[derive(Debug)]
+    pub struct ButtonClickData {
+        pub position: BoardPosition,
     }
 }
 
@@ -67,22 +76,17 @@ mod resource {
 mod component {
     use super::*;
 
-    #[derive(Component)]
-    pub struct BoardPositionComponent(pub BoardPosition);
+    #[derive(Component, Deref)]
+    pub struct BoardPositionComponent(#[deref] pub BoardPosition);
 
     #[derive(Component, Deref, DerefMut)]
     pub struct Clickable(#[deref] pub bool);
 }
 
-mod event {
-    use super::*;
-
-    #[derive(Event)]
-    pub struct CellClicked(pub BoardPosition);
-}
-
 mod system {
-    use super::*;
+    use std::ops::Deref;
+
+    use super::{data::ButtonClickData, *};
 
     pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::BoardSettings>) {
         let mut entities = resource::Entities::default();
@@ -158,7 +162,7 @@ mod system {
             .insert(component::Clickable(true)); // change this to false when the clickable button system is complete
     }
 
-    pub fn button_system(
+    pub fn button_interaction_system(
         mut interaction_query: Query<
             (
                 &Interaction,
@@ -173,12 +177,11 @@ mod system {
                 With<component::Clickable>,
             ),
         >,
-        mut event_writer: EventWriter<event::CellClicked>,
         board_settings: Res<resource::BoardSettings>,
-    ) {
+    ) -> Option<data::ButtonClickData> {
         for (interaction, mut color, board_pos, clickable) in &mut interaction_query {
             if !**clickable {
-                return;
+                break;
             }
 
             match *interaction {
@@ -189,17 +192,23 @@ mod system {
                     *color = board_settings.cell_color.into();
 
                     if other == Interaction::Pressed {
-                        let event = event::CellClicked(board_pos.0);
-                        event_writer.send(event);
+                        return Some(ButtonClickData {
+                            position: board_pos.deref().clone(),
+                        });
                     }
                 }
             }
         }
+
+        return None;
     }
 
-    pub fn read_event_system(mut event_reader: EventReader<event::CellClicked>) {
-        for e in event_reader.iter() {
-            info!("CellClicked {:?}", e.0);
+    pub fn handle_button_interaction(In(button_interaction): In<Option<ButtonClickData>>) {
+        match button_interaction {
+            Some(button_interaction) => {
+                info!("Button clicked: {:?}", button_interaction);
+            }
+            None => (),
         }
     }
 }
