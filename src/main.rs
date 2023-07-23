@@ -7,13 +7,14 @@ mod bevy_test;
 
 use bevy::prelude::*;
 use game_state::{
-    plugin::{BoardSettings, GamePlugin},
-    GameStatePlugin,
+    data::Turn,
+    plugin::{BoardSettings, GamePlugin, GameStatePlugin},
 };
 
 const GAME_TITLE: &'static str = "Reversi";
 const WINDOW_RESOLUTION_X: f32 = 1280.;
 const WINDOW_RESOLUTION_Y: f32 = 720.;
+const FIRST_TURN: Turn = Turn::Black;
 const BOARD_SIZE_X: u16 = 8;
 const BOARD_SIZE_Y: u16 = 8;
 const CELL_COLOR: Color = Color::Rgba {
@@ -51,6 +52,7 @@ fn setup_game() {
         }))
         .add_plugins(GameStatePlugin {
             game_plugin: GamePlugin {
+                first_turn: FIRST_TURN,
                 board_settings: BoardSettings {
                     board_size_x: BOARD_SIZE_X,
                     board_size_y: BOARD_SIZE_Y,

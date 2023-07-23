@@ -1,6 +1,9 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::{Commands, Deref, DerefMut, DespawnRecursiveExt, Entity, Res, Resource};
+use bevy::prelude::{
+    Commands, Deref, DerefMut, DespawnRecursiveExt, Entity, Event as BevyEvent, EventWriter, Res,
+    Resource,
+};
 
 #[derive(Resource, Clone, Default, Deref, DerefMut)]
 pub struct Entities<Marker>(PhantomData<Marker>, #[deref] Vec<Entity>);
@@ -26,4 +29,26 @@ pub fn despawn_entities_and_clear_resource<Resource>(
         commands.entity(entity.clone()).despawn_recursive();
     }
     commands.remove_resource::<Resource>();
+}
+
+pub fn send_default_event<Event>(mut event_writer: EventWriter<Event>)
+where
+    Event: BevyEvent + Default,
+{
+    event_writer.send_default();
+}
+
+pub fn remove_resource<Resource: bevy::prelude::Resource>(mut commands: Commands) {
+    commands.remove_resource::<Resource>();
+}
+
+pub mod system_adapter {
+    use bevy::prelude::{Event as BevyEvent, EventWriter, In};
+
+    pub fn send_event<Event>(In(event): In<Event>, mut event_writer: EventWriter<Event>)
+    where
+        Event: BevyEvent + Default,
+    {
+        event_writer.send(event);
+    }
 }
