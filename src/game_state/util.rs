@@ -1,4 +1,16 @@
-use bevy::prelude::{Commands, DespawnRecursiveExt, Entity, Res};
+use std::marker::PhantomData;
+
+use bevy::prelude::{Commands, Deref, DerefMut, DespawnRecursiveExt, Entity, Res, Resource};
+
+#[derive(Resource, Clone, Default, Deref, DerefMut)]
+pub struct Entities<Marker>(PhantomData<Marker>, #[deref] Vec<Entity>);
+
+impl<Marker> IterEntity for Entities<Marker> {
+    fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
+        let iter = self.1.iter().map(|x| x.clone());
+        Box::new(iter)
+    }
+}
 
 pub trait IterEntity {
     fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_>;

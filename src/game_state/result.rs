@@ -4,6 +4,7 @@ pub use data::{PlayerType, ResultData};
 pub use event::ResultEvent;
 pub use plugin::ResultPlugin;
 
+use super::util::*;
 use super::GameState;
 
 mod plugin {
@@ -23,7 +24,7 @@ mod plugin {
                 )
                 .add_systems(
                     OnExit(GameState::Result),
-                    despawn_entities_and_clear_resource::<resource::UiEntityList>,
+                    despawn_entities_and_clear_resource::<resource::Entities>,
                 );
         }
     }
@@ -45,19 +46,11 @@ mod data {
 }
 
 mod resource {
-    use bevy::prelude::{Entity, Resource};
 
-    use crate::game_state::util::IterEntity;
+    #[derive(Default)]
+    pub struct ResultEntities;
 
-    #[derive(Resource, Clone, Default)]
-    pub struct UiEntityList(pub Vec<Entity>);
-
-    impl IterEntity for UiEntityList {
-        fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
-            let iter = self.0.iter().map(|x| x.clone());
-            Box::new(iter)
-        }
-    }
+    pub type Entities = super::Entities<ResultEntities>;
 }
 
 mod event {
@@ -74,7 +67,7 @@ mod system {
         mut commands: Commands,
         mut event_reader: EventReader<event::ResultEvent>,
     ) {
-        let entity_list = resource::UiEntityList::default();
+        let entity_list = resource::Entities::default();
         for _event in event_reader.iter() {
             // setup here
         }

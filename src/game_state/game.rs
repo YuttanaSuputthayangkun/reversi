@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use super::util::Entities;
 use crate::board::BoardPosition;
 
 pub use plugin::GamePlugin;
@@ -22,7 +23,7 @@ mod plugin {
                 .add_systems(OnEnter(GameState::Game), system::spawn_board_ui)
                 .add_systems(
                     OnExit(GameState::Game),
-                    despawn_entities_and_clear_resource::<resource::BoardEntityList>,
+                    despawn_entities_and_clear_resource::<resource::Entities>,
                 )
                 .add_systems(
                     Update,
@@ -46,15 +47,10 @@ mod resource {
         pub background_color: Color,
     }
 
-    #[derive(Resource, Default)]
-    pub struct BoardEntityList(pub Vec<Entity>);
+    #[derive(Default)]
+    pub struct BoardEntities;
 
-    impl IterEntity for BoardEntityList {
-        fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
-            let iter = self.0.iter().map(|x| x.clone());
-            Box::new(iter)
-        }
-    }
+    pub type Entities = super::Entities<BoardEntities>;
 
     #[allow(dead_code)]
     pub enum Turn {
@@ -86,9 +82,9 @@ mod system {
     use super::*;
 
     pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::BoardSettings>) {
-        let mut board_entity_list = resource::BoardEntityList::default();
+        let mut entities = resource::Entities::default();
         let camera = commands.spawn(Camera2dBundle::default()).id();
-        board_entity_list.0.push(camera);
+        entities.push(camera);
         let board = commands
             .spawn(NodeBundle {
                 style: Style {
@@ -137,8 +133,8 @@ mod system {
                     });
             })
             .id();
-        board_entity_list.0.push(board);
-        commands.insert_resource(board_entity_list);
+        entities.push(board);
+        commands.insert_resource(entities);
     }
 
     pub fn spawn_cell(
