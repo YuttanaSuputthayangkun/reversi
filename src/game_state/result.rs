@@ -33,12 +33,14 @@ mod plugin {
 mod data {
     use bevy::utils::HashMap;
 
+    #[allow(dead_code)]
     #[derive(Clone, Copy)]
     pub enum PlayerType {
         Black,
         White,
     }
 
+    #[allow(dead_code)]
     #[derive(Clone)]
     pub struct ResultData {
         scores: HashMap<PlayerType, u16>,

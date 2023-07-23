@@ -6,7 +6,7 @@ use crate::board::BoardPosition;
 pub use plugin::GamePlugin;
 pub use resource::BoardSettings;
 
-use super::util::{despawn_entities_and_clear_resource, IterEntity};
+use super::util::despawn_entities_and_clear_resource;
 use super::{position_pairs, GameState};
 
 mod plugin {
