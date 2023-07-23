@@ -28,7 +28,7 @@ mod plugin {
                 .add_systems(
                     Update,
                     system::button_interaction_system
-                        .pipe(system::handle_button_interaction)
+                        .pipe(system::handle_button_click)
                         .run_if(in_state(GameState::Game)),
                 );
         }
@@ -203,7 +203,7 @@ mod system {
         return None;
     }
 
-    pub fn handle_button_interaction(In(button_interaction): In<Option<ButtonClickData>>) {
+    pub fn handle_button_click(In(button_interaction): In<Option<ButtonClickData>>) {
         match button_interaction {
             Some(button_interaction) => {
                 info!("Button clicked: {:?}", button_interaction);
