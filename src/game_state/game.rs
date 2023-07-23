@@ -69,6 +69,9 @@ mod component {
 
     #[derive(Component)]
     pub struct BoardPositionComponent(pub BoardPosition);
+
+    #[derive(Component, Deref, DerefMut)]
+    pub struct Clickable(#[deref] pub bool);
 }
 
 mod event {
@@ -151,7 +154,8 @@ mod system {
                 background_color: board_settings.background_color.into(),
                 ..default()
             })
-            .insert(component::BoardPositionComponent(pos));
+            .insert(component::BoardPositionComponent(pos))
+            .insert(component::Clickable(true)); // change this to false when the clickable button system is complete
     }
 
     pub fn button_system(
@@ -160,17 +164,23 @@ mod system {
                 &Interaction,
                 &mut BackgroundColor,
                 &component::BoardPositionComponent,
+                &component::Clickable,
             ),
             (
                 Changed<Interaction>,
                 With<Button>,
                 With<component::BoardPositionComponent>,
+                With<component::Clickable>,
             ),
         >,
         mut event_writer: EventWriter<event::CellClicked>,
         board_settings: Res<resource::BoardSettings>,
     ) {
-        for (interaction, mut color, board_pos) in &mut interaction_query {
+        for (interaction, mut color, board_pos, clickable) in &mut interaction_query {
+            if !**clickable {
+                return;
+            }
+
             match *interaction {
                 Interaction::Hovered => {
                     *color = board_settings.cell_hovered_color.into();
