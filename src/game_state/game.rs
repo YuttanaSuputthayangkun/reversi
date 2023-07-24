@@ -50,12 +50,34 @@ mod plugin {
 }
 
 mod data {
+    use std::ops::Rem;
+
     use super::*;
+
+    #[derive(Clone, Copy, Debug, Deref)]
+    pub struct BoardSize(u16);
+
+    impl Into<u16> for BoardSize {
+        fn into(self) -> u16 {
+            self.0.into()
+        }
+    }
+
+    impl TryFrom<u16> for BoardSize {
+        type Error = &'static str;
+
+        fn try_from(value: u16) -> Result<Self, Self::Error> {
+            match value.rem(2) {
+                0 => Ok(BoardSize(value)),
+                _ => Err("BoardSize can only be even."),
+            }
+        }
+    }
 
     #[derive(Clone)]
     pub struct BoardSettings {
-        pub board_size_x: u16,
-        pub board_size_y: u16,
+        pub board_size_x: BoardSize,
+        pub board_size_y: BoardSize,
         pub cell_color: Color,
         pub cell_hovered_color: Color,
         pub background_color: Color,
@@ -177,11 +199,11 @@ mod system {
                             column_gap: Val::Percent(1.),
                             row_gap: Val::Percent(1.),
                             grid_template_columns: RepeatedGridTrack::flex(
-                                board_settings.board_size_y,
+                                board_settings.board_size_y.into(),
                                 1.0,
                             ),
                             grid_template_rows: RepeatedGridTrack::flex(
-                                board_settings.board_size_x,
+                                board_settings.board_size_x.into(),
                                 1.0,
                             ),
                             ..default()
@@ -189,9 +211,10 @@ mod system {
                         ..default()
                     })
                     .with_children(|builder| {
-                        for (x, y) in
-                            position_pairs(board_settings.board_size_x, board_settings.board_size_y)
-                        {
+                        for (x, y) in position_pairs::<u16>(
+                            board_settings.board_size_x.into(),
+                            board_settings.board_size_y.into(),
+                        ) {
                             let pos = board::BoardPosition {
                                 x: x.into(),
                                 y: y.into(),

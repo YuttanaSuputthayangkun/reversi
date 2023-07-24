@@ -54,8 +54,8 @@ fn setup_game() {
             game_plugin: GamePlugin {
                 first_turn: FIRST_TURN,
                 board_settings: BoardSettings {
-                    board_size_x: BOARD_SIZE_X,
-                    board_size_y: BOARD_SIZE_Y,
+                    board_size_x: BOARD_SIZE_X.try_into().unwrap(),
+                    board_size_y: BOARD_SIZE_Y.try_into().unwrap(),
                     cell_color: CELL_COLOR,
                     cell_hovered_color: CELL_HOVERED_COLOR,
                     background_color: BACKGROUND_COLOR,
