@@ -106,8 +106,10 @@ mod data {
         pub position: board::BoardPosition,
     }
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, Default)]
     pub enum Player {
+        #[default]
+        None,
         Black,
         White,
     }
@@ -118,6 +120,7 @@ mod data {
             match self {
                 Black => White,
                 White => Black,
+                None => None,
             }
         }
 
@@ -277,12 +280,15 @@ mod system {
             })
             .insert(component::Cell)
             .insert(component::BoardPosition(pos))
-            .insert(component::Clickable(true)); // change this to false when the clickable button system is complete
+            .insert(component::Clickable(true)) // change this to false when the clickable button system is complete
+            .insert(component::Player(data::Player::default()));
     }
 
     pub fn set_initial_player_cells(
-        mut commands: Commands,
-        mut cells: Query<(Entity, &component::BoardPosition), Added<component::Cell>>,
+        mut cells: Query<
+            (&component::BoardPosition, &mut component::Player),
+            Added<component::Cell>,
+        >,
         board_settings: Res<resource::BoardSettings>,
         mut game_data: ResMut<resource::GameData>,
     ) {
@@ -318,12 +324,9 @@ mod system {
             .into_iter()
             .collect::<HashMap<board::BoardPosition, data::Player>>();
 
-        for (entity, pos) in cells.iter_mut() {
+        for (pos, mut player) in cells.iter_mut() {
             if let Some(set_player) = initial_cell_positions.get(pos.deref()) {
-                commands
-                    .get_entity(entity)
-                    .unwrap()
-                    .insert(component::Player(set_player.clone()));
+                **player = set_player.clone();
             }
         }
 
@@ -333,7 +336,10 @@ mod system {
         }
     }
 
-    pub fn update_cell_clickable() {
+    pub fn update_cell_clickable(
+        mut _cells: Query<&mut component::Clickable, Changed<component::Clickable>>,
+        mut _game_data: ResMut<resource::GameData>,
+    ) {
         // todo
     }
 
@@ -342,6 +348,7 @@ mod system {
             (&mut BackgroundColor, &component::Player, &Interaction),
             With<component::Cell>,
         >,
+        board_settings: Res<resource::BoardSettings>,
     ) {
         for (mut background_color, player, interaction) in cells.iter_mut() {
             match interaction {
@@ -349,6 +356,7 @@ mod system {
                     *background_color = match **player {
                         data::Player::Black => Color::BLACK,
                         data::Player::White => Color::WHITE,
+                        data::Player::None => board_settings.cell_color,
                     }
                     .into();
                 }
