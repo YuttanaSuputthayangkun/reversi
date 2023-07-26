@@ -4,7 +4,7 @@ use super::util;
 use crate::board;
 
 pub use data::BoardSettings;
-pub use data::Turn;
+pub use data::Player;
 pub use plugin::GamePlugin;
 
 use super::util::despawn_entities_and_clear_resource;
@@ -15,17 +15,24 @@ mod plugin {
 
     #[derive(Clone)]
     pub struct GamePlugin {
-        pub first_turn: Turn,
+        pub first_turn: Player,
         pub board_settings: data::BoardSettings,
     }
 
     impl Plugin for GamePlugin {
         fn build(&self, app: &mut bevy::prelude::App) {
             app.insert_resource(resource::BoardSettings(self.board_settings.clone()))
-                .insert_resource::<resource::GameData>(data::GameData::new(self.first_turn).into())
+                .insert_resource::<resource::GameData>(
+                    data::GameData::new(
+                        self.first_turn,
+                        self.board_settings.board_size_x,
+                        self.board_settings.board_size_y,
+                    )
+                    .into(),
+                )
                 .add_event::<event::CellClick>()
                 .add_event::<event::TurnChange>()
-                .add_systems(OnEnter(GameState::Game), system::spawn_board_ui)
+                .add_systems(OnEnter(GameState::Game), system::spawn_board_ui.chain())
                 .add_systems(
                     OnExit(GameState::Game),
                     despawn_entities_and_clear_resource::<resource::Entities>,
@@ -33,10 +40,13 @@ mod plugin {
                 .add_systems(
                     Update,
                     (
+                        system::set_initial_player_cells, // todo: find out how to not run this in update loop
+                        system::update_player_cell_color,
                         system::button_interaction_system,
                         (
                             system::turn_cells,
-                            util::send_default_event::<event::TurnChange>,
+                            system::update_cell_clickable,
+                            // util::send_default_event::<event::TurnChange>,  // todo: find a way to pipe this with turn_cells
                         )
                             .chain()
                             .run_if(on_event::<event::CellClick>()),
@@ -54,8 +64,16 @@ mod data {
 
     use super::*;
 
+    pub type Board = board::Board<Option<data::Player>>;
+
     #[derive(Clone, Copy, Debug, Deref)]
     pub struct BoardSize(u16);
+
+    impl BoardSize {
+        pub fn size(&self) -> u16 {
+            self.0
+        }
+    }
 
     impl Into<u16> for BoardSize {
         fn into(self) -> u16 {
@@ -89,14 +107,14 @@ mod data {
     }
 
     #[derive(Clone, Copy, Debug)]
-    pub enum Turn {
+    pub enum Player {
         Black,
         White,
     }
 
-    impl Turn {
+    impl Player {
         pub fn next(&self) -> Self {
-            use Turn::*;
+            use Player::*;
             match self {
                 Black => White,
                 White => Black,
@@ -110,15 +128,20 @@ mod data {
 
     #[derive(Debug)]
     pub struct GameData {
-        pub turn: Turn,
+        pub turn: Player,
         pub turn_count: u16,
+        pub board: Board,
     }
 
     impl GameData {
-        pub fn new(first_turn: Turn) -> Self {
+        pub fn new(first_turn: Player, board_size_x: BoardSize, board_size_y: BoardSize) -> Self {
+            let size =
+                board::Size::new(board_size_x.size().into(), board_size_y.size().into()).unwrap();
+            let board = Board::new(size);
             GameData {
                 turn: first_turn,
                 turn_count: 0,
+                board: board,
             }
         }
     }
@@ -150,10 +173,16 @@ mod component {
     use super::*;
 
     #[derive(Component, Deref)]
-    pub struct BoardPosition(#[deref] pub board::BoardPosition);
+    pub struct BoardPosition(pub board::BoardPosition);
+
+    #[derive(Component)]
+    pub struct Cell;
 
     #[derive(Component, Deref, DerefMut)]
-    pub struct Clickable(#[deref] pub bool);
+    pub struct Clickable(pub bool);
+
+    #[derive(Component, Deref, DerefMut, Debug)]
+    pub struct Player(pub data::Player);
 }
 
 mod event {
@@ -169,9 +198,13 @@ mod event {
 mod system {
     use std::ops::Deref;
 
+    use bevy::utils::HashMap;
+
     use super::*;
 
     pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::BoardSettings>) {
+        info!("spawn_board_ui");
+
         let mut entities = resource::Entities::default();
         let camera = commands.spawn(Camera2dBundle::default()).id();
         entities.push(camera);
@@ -242,8 +275,86 @@ mod system {
                 background_color: board_settings.background_color.into(),
                 ..default()
             })
+            .insert(component::Cell)
             .insert(component::BoardPosition(pos))
             .insert(component::Clickable(true)); // change this to false when the clickable button system is complete
+    }
+
+    pub fn set_initial_player_cells(
+        mut commands: Commands,
+        mut cells: Query<(Entity, &component::BoardPosition), Added<component::Cell>>,
+        board_settings: Res<resource::BoardSettings>,
+        mut game_data: ResMut<resource::GameData>,
+    ) {
+        if cells.is_empty() {
+            return;
+        }
+
+        const INDEX_OFFSET: u16 = 1;
+        let starting_point = (
+            ((board_settings.board_size_x.size() / 2) - INDEX_OFFSET) as usize,
+            ((board_settings.board_size_y.size() / 2) - INDEX_OFFSET) as usize,
+        );
+        let initial_cell_positions: [(board::BoardPosition, data::Player); 4] = [
+            (
+                (starting_point.0, starting_point.1).into(),
+                data::Player::Black,
+            ),
+            (
+                (starting_point.0 + 1, starting_point.1).into(),
+                data::Player::White,
+            ),
+            (
+                (starting_point.0, starting_point.1 + 1).into(),
+                data::Player::White,
+            ),
+            (
+                (starting_point.0 + 1, starting_point.1 + 1).into(),
+                data::Player::Black,
+            ),
+        ];
+        info!("{:?}", initial_cell_positions);
+        let initial_cell_positions = initial_cell_positions
+            .into_iter()
+            .collect::<HashMap<board::BoardPosition, data::Player>>();
+
+        for (entity, pos) in cells.iter_mut() {
+            if let Some(set_player) = initial_cell_positions.get(pos.deref()) {
+                commands
+                    .get_entity(entity)
+                    .unwrap()
+                    .insert(component::Player(set_player.clone()));
+            }
+        }
+
+        for (pos, player) in initial_cell_positions.iter() {
+            let cell_mut = game_data.board.cell_mut(pos.deref()).unwrap();
+            cell_mut.replace(player.clone());
+        }
+    }
+
+    pub fn update_cell_clickable() {
+        // todo
+    }
+
+    pub fn update_player_cell_color(
+        mut cells: Query<
+            (&mut BackgroundColor, &component::Player, &Interaction),
+            With<component::Cell>,
+        >,
+    ) {
+        for (mut background_color, player, interaction) in cells.iter_mut() {
+            match interaction {
+                Interaction::None => {
+                    *background_color = match **player {
+                        data::Player::Black => Color::BLACK,
+                        data::Player::White => Color::WHITE,
+                    }
+                    .into();
+                }
+                _ => (),
+            }
+        }
     }
 
     pub fn button_interaction_system(
@@ -271,9 +382,9 @@ mod system {
                 }
                 other => {
                     *color = board_settings.cell_color.into();
-
                     if other == Interaction::Pressed {
                         if **clickable {
+                            info!("clicked: {:?}", board_pos.deref());
                             cell_click_event.send(event::CellClick(board_pos.deref().clone()));
                         }
                     }
@@ -282,11 +393,18 @@ mod system {
         }
     }
 
-    pub fn turn_cells(mut _game_data: ResMut<resource::GameData>) {
+    pub fn turn_cells(_cells: Query<&component::Cell>, mut _game_data: ResMut<resource::GameData>) {
+        // cells.iter_many(f)
+
         // implement
     }
 
-    pub fn update_turn(mut game_data: ResMut<resource::GameData>) {
+    pub fn update_turn(
+        // clickable_cells: Query<&component::Clickable>,
+        mut game_data: ResMut<resource::GameData>,
+    ) {
+        // clickable_cells.
+
         // todo: check if the board can be clicked on this turn
         game_data.turn.next_mut();
         game_data.turn_count += 1;

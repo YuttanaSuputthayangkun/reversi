@@ -18,7 +18,7 @@ pub mod plugin {
 }
 
 pub mod data {
-    pub use super::game::Turn;
+    pub use super::game::Player;
 }
 
 pub struct GameStatePlugin {
