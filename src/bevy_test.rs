@@ -128,3 +128,48 @@ fn test_pipe_chain() {
         Some(&PipeResource2(2))
     );
 }
+
+#[test]
+fn test_added_filter() {
+    #![allow(dead_code, unused_mut, unused_variables, unreachable_code)]
+
+    use bevy::prelude::*;
+    use std::ops::DerefMut;
+
+    #[derive(Component)]
+    struct Message;
+
+    #[derive(Resource, Deref, DerefMut)]
+    struct FoundComponent(bool);
+
+    let mut world = World::new();
+    world.insert_resource(FoundComponent(false));
+
+    fn add_component(mut commands: Commands) {
+        commands.spawn(Message);
+    }
+
+    fn detect_new_component(
+        mut query: Query<Added<Message>>,
+        mut found_component: ResMut<FoundComponent>,
+    ) {
+        if !query.is_empty() {
+            *found_component.as_mut().deref_mut() = true;
+        }
+    }
+
+    matches!(
+        world.get_resource::<FoundComponent>(),
+        Some(&FoundComponent(false))
+    );
+
+    let mut schedule = Schedule::new();
+    schedule.add_systems(detect_new_component);
+    schedule.add_systems(add_component);
+    schedule.run(&mut world);
+
+    matches!(
+        world.get_resource::<FoundComponent>(),
+        Some(&FoundComponent(true))
+    );
+}
