@@ -106,7 +106,7 @@ mod data {
         pub position: board::BoardPosition,
     }
 
-    #[derive(Clone, Copy, Debug, Default)]
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
     pub enum Player {
         #[default]
         None,
@@ -280,7 +280,7 @@ mod system {
             })
             .insert(component::Cell)
             .insert(component::BoardPosition(pos))
-            .insert(component::Clickable(true)) // change this to false when the clickable button system is complete
+            .insert(component::Clickable(false))
             .insert(component::Player(data::Player::default()));
     }
 
@@ -337,20 +337,41 @@ mod system {
     }
 
     pub fn update_cell_clickable(
-        mut _cells: Query<&mut component::Clickable, Changed<component::Clickable>>,
-        mut _game_data: ResMut<resource::GameData>,
+        mut cells: Query<
+            (
+                &mut component::Clickable,
+                &component::BoardPosition,
+                &component::Player,
+            ),
+            Changed<component::Clickable>,
+        >,
+        mut game_data: ResMut<resource::GameData>,
     ) {
-        // todo
+        let game_data = &**game_data;
+        let current_turn = &game_data.turn;
+
+        for (clickable, board_position, player) in cells.iter_mut() {
+            // update clickable component of cells
+        }
     }
 
     pub fn update_player_cell_color(
         mut cells: Query<
-            (&mut BackgroundColor, &component::Player, &Interaction),
+            (
+                &mut BackgroundColor,
+                &component::Player,
+                &Interaction,
+                &component::Clickable,
+            ),
             With<component::Cell>,
         >,
         board_settings: Res<resource::BoardSettings>,
     ) {
-        for (mut background_color, player, interaction) in cells.iter_mut() {
+        for (mut background_color, player, interaction, clickable) in cells.iter_mut() {
+            if !**clickable {
+                break;
+            }
+
             match interaction {
                 Interaction::None => {
                     *background_color = match **player {
