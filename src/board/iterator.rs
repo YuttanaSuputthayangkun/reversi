@@ -59,7 +59,9 @@ where
             NotStarted => {
                 self.state = Started;
                 let result = self.current_cell_mut();
-                result.map(|c| unsafe { &mut *(c as *mut Cell) })
+                result.map(|c| unsafe {
+                    &mut *(c as *mut Cell) // this is for bypassing the lifetime
+                })
             }
             Started => {
                 self.position.apply_direction(&self.direction, self.step);
