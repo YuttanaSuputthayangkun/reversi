@@ -63,9 +63,9 @@ where
             }
             Started => {
                 self.position.apply_direction(&self.direction, self.step);
-                let result = self
-                    .current_cell_mut()
-                    .map(|c| unsafe { &mut *(c as *mut Cell) });
+                let result = self.current_cell_mut().map(|c| unsafe {
+                    &mut *(c as *mut Cell) // this is for bypassing the lifetime
+                });
                 if result.is_none() {
                     self.state = End;
                 }
