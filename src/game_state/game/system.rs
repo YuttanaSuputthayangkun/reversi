@@ -3,8 +3,7 @@ use bevy::prelude::*;
 use super::util;
 use crate::board;
 
-pub use data::BoardSettings;
-pub use data::Player;
+pub use data::{Board, BoardCell, BoardSettings, Player};
 pub use plugin::GamePlugin;
 
 use super::util::despawn_entities_and_clear_resource;
@@ -64,7 +63,8 @@ mod data {
 
     use super::*;
 
-    pub type Board = board::Board<Option<data::Player>>;
+    pub type BoardCell = Option<data::Player>;
+    pub type Board = board::Board<BoardCell>;
 
     #[derive(Clone, Copy, Debug, Deref)]
     pub struct BoardSize(u16);

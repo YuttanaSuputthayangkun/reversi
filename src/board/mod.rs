@@ -31,6 +31,13 @@ pub enum Direction {
     DownRight,
 }
 
+impl Direction {
+    fn directions() -> impl Iterator<Item = Direction> {
+        use Direction::*;
+        [Left, Right, Up, Down, UpLeft, UpRight, DownLeft, DownRight].into_iter()
+    }
+}
+
 impl<Cell> Board<Cell>
 where
     Cell: Default,

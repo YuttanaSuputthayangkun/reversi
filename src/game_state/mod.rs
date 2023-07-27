@@ -9,6 +9,7 @@ mod result;
 #[cfg(feature = "debug")]
 mod debug;
 
+use super::board;
 use game::GamePlugin;
 
 pub mod plugin {

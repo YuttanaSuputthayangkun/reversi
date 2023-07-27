@@ -2,7 +2,8 @@
 mod cell;
 mod system;
 
-use super::{position_pairs, util, GameState};
+use super::{board, position_pairs, util, GameState};
+use system::{Board, BoardCell};
 
 pub use system::BoardSettings;
 pub use system::GamePlugin;
