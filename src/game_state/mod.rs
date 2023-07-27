@@ -1,7 +1,7 @@
 use bevy::prelude::{Plugin, States};
 
 #[allow(dead_code)]
-pub mod util;
+mod util;
 
 mod game;
 mod result;

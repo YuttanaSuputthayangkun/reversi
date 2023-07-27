@@ -345,12 +345,12 @@ mod system {
             ),
             Changed<component::Clickable>,
         >,
-        mut game_data: ResMut<resource::GameData>,
+        mut _game_data: ResMut<resource::GameData>,
     ) {
-        let game_data = &**game_data;
-        let current_turn = &game_data.turn;
+        let game_data = &**_game_data;
+        let _current_turn = &game_data.turn;
 
-        for (clickable, board_position, player) in cells.iter_mut() {
+        for (_clickable, _board_position, _player) in cells.iter_mut() {
             // update clickable component of cells
         }
     }
