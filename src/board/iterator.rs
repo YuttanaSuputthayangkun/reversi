@@ -51,22 +51,30 @@ impl<'a, Cell> Iterator for IterMut<'a, Cell>
 where
     Cell: Default,
 {
-    type Item = &'a mut Cell;
+    type Item = (BoardPosition, &'a mut Cell);
 
     fn next(&mut self) -> Option<Self::Item> {
         use State::*;
         match &self.state {
             NotStarted => {
                 self.state = Started;
+                let position = self.position.clone();
                 let result = self.current_cell_mut();
                 result.map(|c| unsafe {
-                    &mut *(c as *mut Cell) // this is for bypassing the lifetime
+                    (
+                        position,
+                        &mut *(c as *mut Cell), // this is for bypassing the lifetime
+                    )
                 })
             }
             Started => {
                 self.position.apply_direction(&self.direction, self.step);
+                let position = self.position.clone();
                 let result = self.current_cell_mut().map(|c| unsafe {
-                    &mut *(c as *mut Cell) // this is for bypassing the lifetime
+                    (
+                        position,
+                        &mut *(c as *mut Cell), // this is for bypassing the lifetime
+                    )
                 });
                 if result.is_none() {
                     self.state = End;
@@ -121,16 +129,20 @@ impl<'a, Cell> Iterator for Iter<'a, Cell>
 where
     Cell: Default,
 {
-    type Item = &'a Cell;
+    type Item = (BoardPosition, &'a Cell);
 
     fn next(&mut self) -> Option<Self::Item> {
         use State::*;
         match &self.state {
             NotStarted => {
                 self.state = Started;
+                let position = self.position.clone();
                 let result = self.current_cell();
                 result.map(|c| unsafe {
-                    &*(c as *const Cell) // this is for bypassing the lifetime
+                    (
+                        position,
+                        &*(c as *const Cell), // this is for bypassing the lifetime
+                    )
                 })
             }
             Started => {
@@ -141,7 +153,7 @@ where
                 if result.is_none() {
                     self.state = End;
                 }
-                result
+                result.map(|c| (self.position.clone(), c))
             }
             End => None,
         }
@@ -169,7 +181,7 @@ mod test {
         let size: Size = (1, 2).try_into().unwrap();
         let mut board = Board::<Cell>::new(size);
         let iter = IterMut::new(&mut board, BoardPosition { x: 0, y: 0 }, Direction::Up, 1);
-        iter.for_each(|c| *c = Some(()));
+        iter.for_each(|(_, c)| *c = Some(()));
         let board2 = Board {
             size: size.clone(),
             cells: {

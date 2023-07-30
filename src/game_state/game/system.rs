@@ -1,10 +1,11 @@
 use crate::board;
 use bevy::prelude::*;
+use itertools::Itertools;
 
 use super::position_pairs;
 pub use data::{Board, BoardCell, BoardSettings, Player};
 
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 use bevy::utils::HashMap;
 
@@ -14,6 +15,7 @@ pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::Boar
     info!("spawn_board_ui");
 
     let mut entities = resource::Entities::default();
+    let mut cell_entities = resource::BoardCellEntities::default();
     let camera = commands.spawn(Camera2dBundle::default()).id();
     entities.push(camera);
     let board = commands
@@ -60,20 +62,22 @@ pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::Boar
                             x: x.into(),
                             y: y.into(),
                         };
-                        spawn_cell(builder, pos, &board_settings);
+                        let cell_entity = spawn_cell(builder, pos, &board_settings);
+                        cell_entities.deref_mut().insert(pos, cell_entity);
                     }
                 });
         })
         .id();
     entities.push(board);
     commands.insert_resource(entities);
+    commands.insert_resource(cell_entities);
 }
 
 pub fn spawn_cell(
     builder: &mut ChildBuilder,
     pos: board::BoardPosition,
     board_settings: &resource::BoardSettings,
-) {
+) -> Entity {
     builder
         .spawn(ButtonBundle {
             style: Style {
@@ -86,7 +90,8 @@ pub fn spawn_cell(
         .insert(component::Cell)
         .insert(component::BoardPosition(pos))
         .insert(component::Clickable(false))
-        .insert(component::Player(data::Player::default()));
+        .insert(component::Player(data::Player::default()))
+        .id()
 }
 
 pub fn set_initial_player_cells(
@@ -133,41 +138,66 @@ pub fn set_initial_player_cells(
     }
 
     for (pos, player) in initial_cell_positions.iter() {
-        let cell_mut = game_data.board.cell_mut(pos.deref()).unwrap();
+        let cell_mut = game_data.board_mut().cell_mut(pos.deref()).unwrap();
         *cell_mut = player.clone();
     }
 }
 
 pub fn update_cell_clickable(
-    mut cells: Query<
-        (
-            &mut component::Clickable,
-            &component::BoardPosition,
-            &component::Player,
-        ),
-        // Changed<component::Clickable>,
-    >,
+    mut commands: Commands,
+    mut cells: Query<(&component::BoardPosition, &component::Player)>,
     game_data: Res<resource::GameData>,
+    board_entities: Res<resource::BoardCellEntities>,
 ) {
+    let cell_group = cells
+        .iter()
+        .sorted_by(|(_, a), (_, b)| a.cmp(b))
+        .group_by(|x| x.1.deref());
+    let cell_log = cell_group
+        .into_iter()
+        .map(|(player, cells)| {
+            let cell_texts = cells
+                .map(|(pos, _)| format!("({},{})", pos.x, pos.y))
+                .collect::<Vec<_>>();
+            let cell_count = cell_texts.iter().count();
+            let cell_texts = cell_texts.into_iter().collect::<Vec<_>>().join(", ");
+            format!(
+                "(player({:?}), count({}) cells({}))",
+                player, cell_count, cell_texts
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    info!(
+        "update_cell_clickable cells count({}), turn({:?}) cells({})",
+        cells.iter().count(),
+        game_data.as_ref().turn,
+        cell_log
+    );
+
     let game_data = &**game_data;
     let current_turn = game_data.turn;
 
     // todo: remove after debug
     let mut clickable_positions: Vec<board::BoardPosition> = vec![];
 
-    for (mut clickable, board_position, player) in cells.iter_mut() {
-        // clear clickable status
-        **clickable = false;
-
+    for (board_position, player) in cells.iter_mut() {
         // check only if the cell matches the current turn player
-        if player.ne(&current_turn.into()) {
-            break;
+        let current_player: data::Player = current_turn.into();
+        if player.ne(&current_player) {
+            continue;
         }
+
+        info!(
+            "check on player({:?}) pos({:?})",
+            &player,
+            board_position.deref()
+        );
 
         let opposite_player = player.next();
         for direction in board::DIRECTIONS.iter() {
             let mut iter = board::Iter::new(
-                &game_data.board,
+                &game_data.board(),
                 board_position.deref().clone(),
                 direction.clone(),
                 1,
@@ -176,18 +206,20 @@ pub fn update_cell_clickable(
             // the next cell has to be the opposite player, break if not
             // "if let &&" pattern is not available here
             match iter.next() {
-                Some(player) if player.ne(&opposite_player) => break,
+                Some((_, player)) if player.ne(&opposite_player) => break,
                 _ => (),
             }
 
             // skip all opposite players
-            let mut iter = iter.skip_while(|&p| p.eq(&opposite_player));
+            let mut iter = iter.skip_while(|(_, &p)| p.eq(&opposite_player));
 
             // check if the cell has empty player
-            if let Some(data::Player::None) = iter.next() {
-                **clickable = true;
-
-                clickable_positions.push(board_position.deref().clone());
+            if let Some((cell_position, data::Player::None)) = iter.next() {
+                let entity = board_entities.get(&cell_position).unwrap();
+                commands
+                    .entity(entity.clone())
+                    .insert(component::Clickable(true));
+                clickable_positions.push(cell_position.clone());
             }
         }
     }
@@ -269,6 +301,8 @@ pub fn button_interaction_system(
 }
 
 pub fn turn_cells(_cells: Query<&component::Cell>, mut _game_data: ResMut<resource::GameData>) {
+    info!("turn_cells");
+
     // cells.iter_many(f)
 
     // implement

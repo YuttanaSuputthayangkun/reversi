@@ -47,7 +47,7 @@ pub struct CellData {
     pub position: board::BoardPosition,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Player {
     #[default]
     None,
@@ -95,7 +95,7 @@ impl Into<Player> for Turn {
 pub struct GameData {
     pub turn: Turn,
     pub turn_count: u16,
-    pub board: Board,
+    board: Board,
 }
 
 impl GameData {
@@ -108,5 +108,13 @@ impl GameData {
             turn_count: 0,
             board: board,
         }
+    }
+
+    pub fn board(&self) -> &Board {
+        &self.board
+    }
+
+    pub fn board_mut(&mut self) -> &mut Board {
+        &mut self.board
     }
 }

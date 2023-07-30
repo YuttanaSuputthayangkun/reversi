@@ -39,7 +39,11 @@ impl Plugin for GamePlugin {
                         // util::send_default_event::<event::TurnChange>,  // todo: find a way to pipe this with turn_cells
                     )
                         .chain()
-                        .run_if(on_event::<event::CellClick>()),
+                        .run_if(
+                            // todo: check if we can use resource_added
+                            on_event::<event::CellClick>()
+                                .or_else(resource_added::<resource::BoardCellEntities>()),
+                        ),
                     system::update_turn.run_if(on_event::<event::TurnChange>()),
                 )
                     .chain()
