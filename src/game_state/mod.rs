@@ -10,16 +10,17 @@ mod result;
 mod debug;
 
 use super::board;
-use game::GamePlugin;
+use game::plugin::GamePlugin;
 
 pub mod plugin {
-    pub use super::game::BoardSettings;
-    pub use super::game::GamePlugin;
-    pub use super::GameStatePlugin;
+    pub use super::{
+        game::{data::BoardSettings, plugin::GamePlugin},
+        GameStatePlugin,
+    };
 }
 
 pub mod data {
-    pub use super::game::Player;
+    pub use super::game::data::Turn;
 }
 
 pub struct GameStatePlugin {

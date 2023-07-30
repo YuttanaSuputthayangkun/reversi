@@ -78,6 +78,76 @@ where
     }
 }
 
+pub struct Iter<'a, Cell>
+where
+    Cell: Default,
+{
+    board: &'a Board<Cell>,
+    position: BoardPosition,
+    direction: Direction,
+    step: usize,
+    state: State,
+}
+
+impl<'a, Cell> Iter<'a, Cell>
+where
+    Cell: Default,
+{
+    pub fn new(
+        board: &'a Board<Cell>,
+        pos: BoardPosition,
+        direction: Direction,
+        step: usize,
+    ) -> Iter<'a, Cell> {
+        Iter {
+            board: board,
+            position: pos,
+            direction,
+            step: step,
+            state: State::NotStarted,
+        }
+    }
+
+    fn cell(&mut self, pos: &BoardPosition) -> Option<&Cell> {
+        self.board.cell_ref(pos)
+    }
+
+    fn current_cell(&mut self) -> Option<&Cell> {
+        self.board.cell_ref(&self.position)
+    }
+}
+
+impl<'a, Cell> Iterator for Iter<'a, Cell>
+where
+    Cell: Default,
+{
+    type Item = &'a Cell;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        use State::*;
+        match &self.state {
+            NotStarted => {
+                self.state = Started;
+                let result = self.current_cell();
+                result.map(|c| unsafe {
+                    &*(c as *const Cell) // this is for bypassing the lifetime
+                })
+            }
+            Started => {
+                self.position.apply_direction(&self.direction, self.step);
+                let result = self.current_cell().map(|c| unsafe {
+                    &*(c as *const Cell) // this is for bypassing the lifetime
+                });
+                if result.is_none() {
+                    self.state = End;
+                }
+                result
+            }
+            End => None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;

@@ -5,16 +5,19 @@ mod game_state;
 #[cfg(test)]
 mod bevy_test;
 
+#[cfg(test)]
+mod iterator_test;
+
 use bevy::prelude::*;
 use game_state::{
-    data::Player,
+    data::Turn,
     plugin::{BoardSettings, GamePlugin, GameStatePlugin},
 };
 
 const GAME_TITLE: &'static str = "Reversi";
 const WINDOW_RESOLUTION_X: f32 = 1280.;
 const WINDOW_RESOLUTION_Y: f32 = 720.;
-const FIRST_TURN: Player = Player::Black;
+const FIRST_TURN: Turn = Turn::Black;
 const BOARD_SIZE_X: u16 = 8;
 const BOARD_SIZE_Y: u16 = 8;
 const CELL_COLOR: Color = Color::Rgba {
@@ -29,6 +32,7 @@ const CELL_HOVERED_COLOR: Color = Color::Rgba {
     blue: 1.,
     alpha: 1.,
 };
+const CELL_CLICKABLE_COLOR: Color = Color::RED;
 const BACKGROUND_COLOR: Color = Color::Rgba {
     red: 145. / 256.,
     green: 145. / 256.,
@@ -58,6 +62,7 @@ fn setup_game() {
                     board_size_y: BOARD_SIZE_Y.try_into().unwrap(),
                     cell_color: CELL_COLOR,
                     cell_hovered_color: CELL_HOVERED_COLOR,
+                    cell_clickable_color: CELL_CLICKABLE_COLOR,
                     background_color: BACKGROUND_COLOR,
                 },
             },

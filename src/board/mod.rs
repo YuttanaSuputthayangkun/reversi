@@ -19,7 +19,7 @@ pub enum Axis {
     Y,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Direction {
     Left,
     Right,
@@ -31,12 +31,16 @@ pub enum Direction {
     DownRight,
 }
 
-impl Direction {
-    fn directions() -> impl Iterator<Item = Direction> {
-        use Direction::*;
-        [Left, Right, Up, Down, UpLeft, UpRight, DownLeft, DownRight].into_iter()
-    }
-}
+pub const DIRECTIONS: [Direction; 8] = [
+    Direction::Left,
+    Direction::Right,
+    Direction::Up,
+    Direction::Down,
+    Direction::UpLeft,
+    Direction::UpRight,
+    Direction::DownLeft,
+    Direction::DownRight,
+];
 
 impl<Cell> Board<Cell>
 where
