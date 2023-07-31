@@ -203,10 +203,24 @@ pub fn update_cell_clickable(
                 1,
             );
 
-            // the next cell has to be the opposite player, break if not
+            {
+                let board_position = board_position.deref().clone();
+                info!(
+                    "direction({:?}) from position({:?})",
+                    &direction, board_position
+                );
+            }
+
+            // the next cell has to be the opposite player, skip loop if not
             // "if let &&" pattern is not available here
             match iter.next() {
-                Some((_, player)) if player.ne(&opposite_player) => break,
+                Some((_, player)) if player.ne(&opposite_player) => {
+                    info!(
+                        "The next is not opposite player! It's player({:?})",
+                        &player
+                    );
+                    continue;
+                }
                 _ => (),
             }
 

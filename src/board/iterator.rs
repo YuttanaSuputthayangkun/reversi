@@ -58,6 +58,7 @@ where
         match &self.state {
             NotStarted => {
                 self.state = Started;
+                self.position.apply_direction(&self.direction, self.step);
                 let position = self.position.clone();
                 let result = self.current_cell_mut();
                 result.map(|c| unsafe {
@@ -136,6 +137,7 @@ where
         match &self.state {
             NotStarted => {
                 self.state = Started;
+                self.position.apply_direction(&self.direction, self.step);
                 let position = self.position.clone();
                 let result = self.current_cell();
                 result.map(|c| unsafe {
@@ -171,7 +173,6 @@ mod test {
         let mut board = Board::<()>::new(size);
         let mut iter = IterMut::new(&mut board, BoardPosition { x: 0, y: 0 }, Direction::Up, 1);
         assert!(iter.next().is_some());
-        assert!(iter.next().is_some());
         assert!(iter.next().is_none());
     }
 
@@ -186,7 +187,7 @@ mod test {
             size: size.clone(),
             cells: {
                 let mut map = HashMap::<BoardPosition, Cell>::new();
-                map.insert((0, 0).into(), Some(()));
+                map.insert((0, 0).into(), None);
                 map.insert((0, 1).into(), Some(()));
                 map
             },
