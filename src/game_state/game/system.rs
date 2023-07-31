@@ -143,6 +143,12 @@ pub fn set_initial_player_cells(
     }
 }
 
+pub fn clear_cell_clickable(mut cells: Query<&mut component::Clickable>) {
+    for mut clickable in cells.iter_mut() {
+        **clickable = false;
+    }
+}
+
 pub fn update_cell_clickable(
     mut commands: Commands,
     mut cells: Query<(&component::BoardPosition, &component::Player)>,
@@ -314,23 +320,11 @@ pub fn button_interaction_system(
     }
 }
 
-pub fn turn_cells(_cells: Query<&component::Cell>, mut _game_data: ResMut<resource::GameData>) {
-    info!("turn_cells");
-
-    // cells.iter_many(f)
-
-    // implement
-}
-
-pub fn update_turn(
-    // clickable_cells: Query<&component::Clickable>,
-    mut game_data: ResMut<resource::GameData>,
-) {
-    // clickable_cells.
-
-    // todo: check if the board can be clicked on this turn
+pub fn update_turn(mut game_data: ResMut<resource::GameData>) {
     game_data.turn = game_data.turn.next();
     game_data.turn_count += 1;
-    info!("update_turn: {:?}", game_data);
+    {
+        let turn = &game_data.turn;
+        info!("update_turn to player({:?})", turn);
+    }
 }
-// }

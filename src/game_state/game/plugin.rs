@@ -32,11 +32,11 @@ impl Plugin for GamePlugin {
                 (
                     system::set_initial_player_cells, // todo: find out how to not run this in update loop
                     system::update_player_cell_color,
-                    system::button_interaction_system,
+                    system::button_interaction_system, // send event::CellClick
                     (
-                        system::turn_cells,
+                        system::clear_cell_clickable,
                         system::update_cell_clickable,
-                        // util::send_default_event::<event::TurnChange>,  // todo: find a way to pipe this with turn_cells
+                        util::send_default_event::<event::TurnChange>, // todo: find a way to pipe this with turn_cells
                     )
                         .chain()
                         .run_if(
