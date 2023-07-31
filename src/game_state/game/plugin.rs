@@ -31,7 +31,6 @@ impl Plugin for GamePlugin {
                 Update,
                 (
                     system::set_initial_player_cells, // todo: find out how to not run this in update loop
-                    system::update_player_cell_color,
                     system::button_interaction_system, // send event::CellClick
                     (
                         system::clear_cell_clickable,
@@ -44,6 +43,7 @@ impl Plugin for GamePlugin {
                             on_event::<event::CellClick>()
                                 .or_else(resource_added::<resource::BoardCellEntities>()),
                         ),
+                    system::update_player_cell_color, // todo: add run condition
                     system::update_turn.run_if(on_event::<event::TurnChange>()),
                 )
                     .chain()
