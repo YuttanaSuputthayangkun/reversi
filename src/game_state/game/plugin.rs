@@ -44,7 +44,6 @@ impl Plugin for GamePlugin {
                         ),
                     util::send_default_event::<event::TurnChange>
                         .run_if(on_event::<event::CellClick>()),
-                    system::change_cell_color,
                     (system::update_turn,).run_if(on_event::<event::TurnChange>()),
                     (system::clear_cell_clickable, system::update_cell_clickable)
                         .chain()
@@ -52,6 +51,7 @@ impl Plugin for GamePlugin {
                             on_event::<event::TurnChange>()
                                 .or_else(resource_added::<resource::BoardCellEntities>()), // just for after init
                         ),
+                    system::change_cell_color,
                 )
                     .chain()
                     .run_if(in_state(GameState::Game)),

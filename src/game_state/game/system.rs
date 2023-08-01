@@ -386,23 +386,27 @@ pub fn change_cell_color(
         (
             &mut BackgroundColor,
             &component::Player,
-            &Interaction,
             &component::Clickable,
         ),
-        With<component::Cell>,
+        (
+            With<component::Cell>,
+            Or<(
+                Changed<component::Clickable>,
+                Added<component::Clickable>,
+                Changed<component::Player>,
+                Added<component::Player>,
+            )>,
+        ),
     >,
     board_settings: Res<resource::BoardSettings>,
 ) {
-    for (mut background_color, player, interaction, clickable) in cells.iter_mut() {
+    for (mut background_color, player, clickable) in cells.iter_mut() {
         if **clickable {
             *background_color = board_settings.cell_color_clickable().into();
             continue;
         }
 
-        if interaction == &Interaction::None {
-            *background_color = board_settings.player_cell_color(player).into();
-            continue;
-        }
+        *background_color = board_settings.player_cell_color(player).into();
     }
 }
 
