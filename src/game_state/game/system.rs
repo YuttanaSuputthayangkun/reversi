@@ -174,7 +174,7 @@ pub fn change_clicked_player_cell(
             .iter_mut()
             .find(|(pos, _)| pos.eq(cell_click))
             .unwrap();
-        let new_player: data::Player = game_data.turn.into();
+        let new_player = game_data.current_player();
         info!("change_clicked_player_cell new_player({:?})", &new_player);
         **matched_cell_player = new_player;
 
@@ -195,8 +195,8 @@ pub fn change_opposite_player_cells(
     mut player_cell_changed_reader: EventReader<event::PlayerCellChanged>,
 ) {
     if let Some(player_cell_changed) = player_cell_changed_reader.iter().next() {
-        let current_player: data::Player = game_data.turn.into();
-        let opposite_player: data::Player = current_player.next();
+        let current_player = game_data.current_player();
+        let opposite_player = game_data.opposite_player();
 
         // info!(
         //     "current_player({:?}) opposite_player({:?})",
@@ -301,14 +301,13 @@ pub fn update_cell_clickable(
     info!(
         "update_cell_clickable cells count({}), turn({:?}) cells({})",
         cells.iter().count(),
-        game_data.as_ref().turn,
+        game_data.as_ref().turn(),
         cell_log
     );
 
     let game_data = &**game_data;
-    let current_turn = game_data.turn;
-    let current_player: data::Player = current_turn.into();
-    let opposite_player = current_player.next();
+    let current_player = game_data.current_player();
+    let opposite_player = game_data.opposite_player();
     info!(
         "update_cell_clickable current_player({:?}) opposite_player({:?})",
         &current_player, &opposite_player
@@ -411,10 +410,13 @@ pub fn change_cell_color(
 }
 
 pub fn update_turn(mut game_data: ResMut<resource::GameData>) {
-    game_data.turn = game_data.turn.next();
-    game_data.turn_count += 1;
+    game_data.update_turn();
     {
-        let turn = &game_data.turn;
+        let turn = game_data.turn();
         info!("update_turn to player({:?})", turn);
     }
+}
+
+pub fn check_win_condition(game_data: Res<resource::GameData>) {
+    // todo
 }

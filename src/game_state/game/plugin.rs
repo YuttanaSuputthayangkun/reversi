@@ -44,7 +44,8 @@ impl Plugin for GamePlugin {
                         ),
                     util::send_default_event::<event::TurnChange>
                         .run_if(on_event::<event::CellClick>()),
-                    (system::update_turn,).run_if(on_event::<event::TurnChange>()),
+                    (system::update_turn, system::check_win_condition)
+                        .run_if(on_event::<event::TurnChange>()),
                     (system::clear_cell_clickable, system::update_cell_clickable)
                         .chain()
                         .run_if(

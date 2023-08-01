@@ -144,8 +144,8 @@ impl Into<Player> for Turn {
 
 #[derive(Debug)]
 pub struct GameData {
-    pub turn: Turn,
-    pub turn_count: u16,
+    turn: Turn,
+    turn_count: u16,
     board: Board,
 }
 
@@ -159,6 +159,23 @@ impl GameData {
             turn_count: 0,
             board: board,
         }
+    }
+
+    pub fn turn(&self) -> &Turn {
+        &self.turn
+    }
+
+    pub fn current_player(&self) -> Player {
+        self.turn.into()
+    }
+
+    pub fn opposite_player(&self) -> Player {
+        self.current_player().next()
+    }
+
+    pub fn update_turn(&mut self) {
+        self.turn = self.turn.next();
+        self.turn_count += 1;
     }
 
     pub fn board(&self) -> &Board {
