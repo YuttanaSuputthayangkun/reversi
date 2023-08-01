@@ -42,11 +42,11 @@ pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::Boar
                         column_gap: Val::Percent(1.),
                         row_gap: Val::Percent(1.),
                         grid_template_columns: RepeatedGridTrack::flex(
-                            board_settings.board_size_y.into(),
+                            board_settings.board_size_y().into(),
                             1.0,
                         ),
                         grid_template_rows: RepeatedGridTrack::flex(
-                            board_settings.board_size_x.into(),
+                            board_settings.board_size_x().into(),
                             1.0,
                         ),
                         ..default()
@@ -55,8 +55,8 @@ pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::Boar
                 })
                 .with_children(|builder| {
                     for (x, y) in position_pairs::<u16>(
-                        board_settings.board_size_x.into(),
-                        board_settings.board_size_y.into(),
+                        board_settings.board_size_x().into(),
+                        board_settings.board_size_y().into(),
                     ) {
                         let pos = board::BoardPosition {
                             x: x.into(),
@@ -84,7 +84,7 @@ pub fn spawn_cell(
                 aspect_ratio: Some(1.0),
                 ..default()
             },
-            background_color: board_settings.background_color.into(),
+            background_color: board_settings.background_color().into(),
             ..default()
         })
         .insert(component::Cell)
@@ -105,8 +105,8 @@ pub fn set_initial_player_cells(
 
     const INDEX_OFFSET: u16 = 1;
     let starting_point = (
-        ((board_settings.board_size_x.size() / 2) - INDEX_OFFSET) as usize,
-        ((board_settings.board_size_y.size() / 2) - INDEX_OFFSET) as usize,
+        ((board_settings.board_size_x().size() / 2) - INDEX_OFFSET) as board::PositionUnit,
+        ((board_settings.board_size_y().size() / 2) - INDEX_OFFSET) as board::PositionUnit,
     );
     let initial_cell_positions: [(board::BoardPosition, data::Player); 4] = [
         (
@@ -140,6 +140,130 @@ pub fn set_initial_player_cells(
     for (pos, player) in initial_cell_positions.iter() {
         let cell_mut = game_data.board_mut().cell_mut(pos.deref()).unwrap();
         *cell_mut = player.clone();
+    }
+}
+
+pub fn button_interaction_system(
+    mut interaction_query: Query<
+        (
+            &Interaction,
+            &component::BoardPosition,
+            &component::Clickable,
+        ),
+        Changed<Interaction>,
+    >,
+    mut cell_click_event: EventWriter<event::CellClick>,
+) {
+    for (interaction, board_pos, clickable) in interaction_query.iter_mut() {
+        if interaction == &Interaction::Pressed && **clickable {
+            info!("clicked: {:?}", board_pos.deref());
+            cell_click_event.send(event::CellClick(board_pos.deref().clone()));
+        }
+    }
+}
+
+pub fn change_clicked_player_cell(
+    mut query: Query<(&component::BoardPosition, &mut component::Player)>,
+    mut game_data: ResMut<resource::GameData>,
+    mut cell_click_reader: EventReader<event::CellClick>,
+    mut player_cell_changed_writer: EventWriter<event::PlayerCellChanged>,
+) {
+    if let Some(cell_click) = cell_click_reader.iter().next() {
+        // find the entity and change the player component
+        let (board_position, mut matched_cell_player) = query
+            .iter_mut()
+            .find(|(pos, _)| pos.eq(cell_click))
+            .unwrap();
+        let new_player: data::Player = game_data.turn.into();
+        info!("change_clicked_player_cell new_player({:?})", &new_player);
+        **matched_cell_player = new_player;
+
+        // update player on the game data
+        let board_player_mut = game_data.board_mut().cell_mut(board_position).unwrap();
+        *board_player_mut = new_player;
+
+        player_cell_changed_writer.send(event::PlayerCellChanged {
+            player: new_player,
+            board_position: **board_position,
+        })
+    }
+}
+
+pub fn change_opposite_player_cells(
+    mut query: Query<(&component::BoardPosition, &mut component::Player)>,
+    mut game_data: ResMut<resource::GameData>,
+    mut player_cell_changed_reader: EventReader<event::PlayerCellChanged>,
+) {
+    if let Some(player_cell_changed) = player_cell_changed_reader.iter().next() {
+        let current_player: data::Player = game_data.turn.into();
+        let opposite_player: data::Player = current_player.next();
+
+        // info!(
+        //     "current_player({:?}) opposite_player({:?})",
+        //     &current_player, &opposite_player
+        // );
+
+        info!(
+            "change_opposite_player_cells player_cell_changed position({:?}) to player({:?})",
+            &player_cell_changed.board_position, &player_cell_changed.player
+        );
+
+        // try to get opposite player cell's position that connects with current player in all directions
+        let opposite_positions = board::DIRECTIONS
+            .iter()
+            .flat_map(|direction| {
+                let mut iter = board::Iter::new(
+                    &game_data.board(),
+                    player_cell_changed.board_position,
+                    direction.clone(),
+                    1,
+                );
+
+                let mut opposite_positions: Vec<board::BoardPosition> = vec![];
+                // todo: implement function for iterator. somthing like take_until...?
+                let found_same_player_on_other_side = loop {
+                    match iter.next() {
+                        Some((pos, player)) if player.eq(&opposite_player) => {
+                            opposite_positions.push(pos);
+                        }
+                        Some((_, player)) if player.eq(&current_player) => {
+                            break true;
+                        }
+                        _ => break false,
+                    }
+                };
+
+                info!(
+                    "direction({:?}) opposite_positions({:?})",
+                    direction, &opposite_positions
+                );
+
+                if found_same_player_on_other_side {
+                    opposite_positions
+                } else {
+                    vec![]
+                }
+            })
+            .map(|pos| (pos, ()))
+            .collect::<HashMap<board::BoardPosition, ()>>();
+
+        info!(
+            "change_opposite_player_cells opposite_positions({:?})",
+            &opposite_positions
+        );
+
+        // update entities
+        for (board_position, mut player) in query.iter_mut() {
+            if opposite_positions.contains_key(board_position.deref()) {
+                **player = current_player;
+            }
+        }
+
+        // update board in game_data
+        for position in opposite_positions.keys() {
+            let cell_mut = game_data.board_mut().cell_mut(position).unwrap();
+            *cell_mut = current_player;
+        }
     }
 }
 
@@ -183,13 +307,18 @@ pub fn update_cell_clickable(
 
     let game_data = &**game_data;
     let current_turn = game_data.turn;
+    let current_player: data::Player = current_turn.into();
+    let opposite_player = current_player.next();
+    info!(
+        "update_cell_clickable current_player({:?}) opposite_player({:?})",
+        &current_player, &opposite_player
+    );
 
     // todo: remove after debug
     let mut clickable_positions: Vec<board::BoardPosition> = vec![];
 
     for (board_position, player) in cells.iter_mut() {
         // check only if the cell matches the current turn player
-        let current_player: data::Player = current_turn.into();
         if player.ne(&current_player) {
             continue;
         }
@@ -200,7 +329,6 @@ pub fn update_cell_clickable(
             board_position.deref()
         );
 
-        let opposite_player = player.next();
         for direction in board::DIRECTIONS.iter() {
             let mut iter = board::Iter::new(
                 &game_data.board(),
@@ -238,7 +366,7 @@ pub fn update_cell_clickable(
                 let entity = board_entities.get(&cell_position).unwrap();
                 commands
                     .entity(entity.clone())
-                    .insert(component::Clickable(true));
+                    .insert(component::Clickable(true)); // todo: check if there's any way to change the component instead of insert
                 clickable_positions.push(cell_position.clone());
             }
         }
@@ -253,7 +381,7 @@ pub fn update_cell_clickable(
     info!("clickable cells: {:?}", &cell_string);
 }
 
-pub fn update_player_cell_color(
+pub fn change_cell_color(
     mut cells: Query<
         (
             &mut BackgroundColor,
@@ -267,55 +395,13 @@ pub fn update_player_cell_color(
 ) {
     for (mut background_color, player, interaction, clickable) in cells.iter_mut() {
         if **clickable {
-            *background_color = board_settings.cell_clickable_color.into();
-        } else {
-            match interaction {
-                Interaction::None => {
-                    *background_color = match **player {
-                        data::Player::Black => Color::BLACK,
-                        data::Player::White => Color::WHITE,
-                        data::Player::None => board_settings.cell_color,
-                    }
-                    .into();
-                }
-                _ => (),
-            }
+            *background_color = board_settings.cell_color_clickable().into();
+            continue;
         }
-    }
-}
 
-pub fn button_interaction_system(
-    mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &component::BoardPosition,
-            &component::Clickable,
-        ),
-        (
-            Changed<Interaction>,
-            With<Button>,
-            With<component::BoardPosition>,
-            With<component::Clickable>,
-        ),
-    >,
-    board_settings: Res<resource::BoardSettings>,
-    mut cell_click_event: EventWriter<event::CellClick>,
-) {
-    for (interaction, mut color, board_pos, clickable) in &mut interaction_query {
-        match *interaction {
-            Interaction::Hovered => {
-                *color = board_settings.cell_hovered_color.into();
-            }
-            other => {
-                *color = board_settings.cell_color.into();
-                if other == Interaction::Pressed {
-                    if **clickable {
-                        info!("clicked: {:?}", board_pos.deref());
-                        cell_click_event.send(event::CellClick(board_pos.deref().clone()));
-                    }
-                }
-            }
+        if interaction == &Interaction::None {
+            *background_color = board_settings.player_cell_color(player).into();
+            continue;
         }
     }
 }

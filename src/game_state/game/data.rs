@@ -1,4 +1,7 @@
-use bevy::prelude::{Color, Deref};
+use bevy::{
+    prelude::{Color, Deref},
+    utils::HashMap,
+};
 
 use super::*;
 use std::ops::Rem;
@@ -34,12 +37,60 @@ impl TryFrom<u16> for BoardSize {
 
 #[derive(Clone)]
 pub struct BoardSettings {
-    pub board_size_x: BoardSize,
-    pub board_size_y: BoardSize,
-    pub cell_color: Color,
-    pub cell_hovered_color: Color,
-    pub cell_clickable_color: Color,
-    pub background_color: Color,
+    board_size_x: BoardSize,
+    board_size_y: BoardSize,
+    cell_color_hovered: Color,
+    cell_color_clickable: Color,
+    cell_player_color_map: HashMap<Player, Color>,
+    background_color: Color,
+}
+
+impl BoardSettings {
+    pub fn new(
+        board_size_x: BoardSize,
+        board_size_y: BoardSize,
+        cell_color_hovered: Color,
+        cell_color_clickable: Color,
+        cell_player_colors: impl Iterator<Item = (Player, Color)>,
+        background_color: Color,
+    ) -> Self {
+        BoardSettings {
+            board_size_x: board_size_x,
+            board_size_y: board_size_y,
+            cell_color_hovered,
+            cell_color_clickable,
+            cell_player_color_map: cell_player_colors.collect::<HashMap<_, _>>(),
+            background_color: background_color,
+        }
+    }
+
+    pub fn board_size_x(&self) -> BoardSize {
+        self.board_size_x
+    }
+
+    pub fn board_size_y(&self) -> BoardSize {
+        self.board_size_y
+    }
+
+    pub fn cell_color_hovered(&self) -> Color {
+        self.cell_color_hovered
+    }
+
+    pub fn cell_color_clickable(&self) -> Color {
+        self.cell_color_clickable
+    }
+
+    pub fn background_color(&self) -> Color {
+        self.background_color
+    }
+
+    pub fn player_cell_color(&self, player: &Player) -> Color {
+        self.cell_player_color_map
+            .get(player)
+            .map(|c| c.clone())
+            .ok_or_else(|| format!("Cannot find cell color for player: {:?}", &player))
+            .unwrap()
+    }
 }
 
 #[derive(Debug)]
@@ -47,7 +98,7 @@ pub struct CellData {
     pub position: board::BoardPosition,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Player {
     #[default]
     None,
@@ -85,8 +136,8 @@ impl Turn {
 impl Into<Player> for Turn {
     fn into(self) -> Player {
         match self {
-            Turn::Black => Player::White,
-            Turn::White => Player::Black,
+            Turn::Black => Player::Black,
+            Turn::White => Player::White,
         }
     }
 }

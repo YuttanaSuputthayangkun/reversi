@@ -1,4 +1,4 @@
-use super::{Board, BoardPosition, Direction};
+use super::{Board, BoardPosition, Direction, Magnitude};
 
 #[derive(Default)]
 enum State {
@@ -15,7 +15,7 @@ where
     board: &'a mut Board<Cell>,
     position: BoardPosition,
     direction: Direction,
-    step: usize,
+    step: Magnitude,
     state: State,
 }
 
@@ -27,7 +27,7 @@ where
         board: &'a mut Board<Cell>,
         pos: BoardPosition,
         direction: Direction,
-        step: usize,
+        step: Magnitude,
     ) -> IterMut<'a, Cell> {
         IterMut {
             board: board,
@@ -94,7 +94,7 @@ where
     board: &'a Board<Cell>,
     position: BoardPosition,
     direction: Direction,
-    step: usize,
+    step: Magnitude,
     state: State,
 }
 
@@ -106,7 +106,7 @@ where
         board: &'a Board<Cell>,
         pos: BoardPosition,
         direction: Direction,
-        step: usize,
+        step: Magnitude,
     ) -> Iter<'a, Cell> {
         Iter {
             board: board,

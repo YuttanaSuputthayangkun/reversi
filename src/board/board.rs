@@ -16,7 +16,12 @@ impl<Cell: Default> Board<Cell> {
     pub fn new<S: Into<Size>>(s: S) -> Self {
         let mut cells = HashMap::new();
         let s: Size = s.into();
-        let positions = (0..s.x()).flat_map(|x| (0..s.y()).map(move |y| BoardPosition { x, y }));
+        let positions = (0..s.x()).flat_map(|x| {
+            (0..s.y()).map(move |y| BoardPosition {
+                x: x as i64,
+                y: y as i64,
+            })
+        });
         for p in positions {
             if cells.insert(p, Cell::default()).is_some() {
                 panic!("Fail to insert cell at ({:?}), this shouldn't happen!", p);

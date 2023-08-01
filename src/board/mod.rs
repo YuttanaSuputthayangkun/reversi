@@ -50,7 +50,7 @@ where
         &mut self,
         pos: BoardPosition,
         direction: Direction,
-        step: usize,
+        step: Magnitude,
     ) -> iterator::IterMut<Cell> {
         iterator::IterMut::<Cell>::new(self, pos, direction, step)
     }

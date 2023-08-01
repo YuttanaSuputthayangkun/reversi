@@ -20,7 +20,7 @@ pub mod plugin {
 }
 
 pub mod data {
-    pub use super::game::data::Turn;
+    pub use super::game::data::{Player, Turn};
 }
 
 pub struct GameStatePlugin {
@@ -45,10 +45,10 @@ enum GameState {
     Result,
 }
 
-fn position_pairs<Size: Into<usize> + Copy>(
+fn position_pairs<Size: Into<board::PositionUnit> + Copy>(
     board_size_x: Size,
     board_size_y: Size,
-) -> Vec<(usize, usize)> {
+) -> Vec<(board::PositionUnit, board::PositionUnit)> {
     (0..board_size_y.into())
         .map(|y| (0..board_size_x.into()).map(move |x| (x, y)))
         .flat_map(|x| x)

@@ -1,9 +1,11 @@
 use super::Axis;
 
+pub type SizeUnit = u16;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Size {
-    x: usize,
-    y: usize,
+    x: SizeUnit,
+    y: SizeUnit,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -14,7 +16,7 @@ pub enum SizeError {
 pub type SizeResult = Result<Size, SizeError>;
 
 impl Size {
-    pub fn new(x: usize, y: usize) -> SizeResult {
+    pub fn new(x: SizeUnit, y: SizeUnit) -> SizeResult {
         match (x, y) {
             (0, _) => Err(SizeError::ZeroSize(Axis::X)),
             (_, 0) => Err(SizeError::ZeroSize(Axis::Y)),
@@ -22,18 +24,18 @@ impl Size {
         }
     }
 
-    pub fn x(&self) -> usize {
+    pub fn x(&self) -> SizeUnit {
         self.x
     }
-    pub fn y(&self) -> usize {
+    pub fn y(&self) -> SizeUnit {
         self.y
     }
 }
 
-impl TryFrom<(usize, usize)> for Size {
+impl TryFrom<(SizeUnit, SizeUnit)> for Size {
     type Error = SizeError;
 
-    fn try_from(value: (usize, usize)) -> Result<Self, Self::Error> {
+    fn try_from(value: (SizeUnit, SizeUnit)) -> Result<Self, Self::Error> {
         Size::new(value.0, value.1)
     }
 }

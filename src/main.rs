@@ -10,7 +10,7 @@ mod iterator_test;
 
 use bevy::prelude::*;
 use game_state::{
-    data::Turn,
+    data::{Player, Turn},
     plugin::{BoardSettings, GamePlugin, GameStatePlugin},
 };
 
@@ -20,19 +20,21 @@ const WINDOW_RESOLUTION_Y: f32 = 720.;
 const FIRST_TURN: Turn = Turn::Black;
 const BOARD_SIZE_X: u16 = 8;
 const BOARD_SIZE_Y: u16 = 8;
-const CELL_COLOR: Color = Color::Rgba {
+const CELL_COLOR_NORMAL: Color = Color::Rgba {
     red: 30. / 256.,
     green: 128. / 256.,
     blue: 0.,
     alpha: 1.,
 };
-const CELL_HOVERED_COLOR: Color = Color::Rgba {
+const CELL_COLOR_PLAYER_WHITE: Color = Color::WHITE;
+const CELL_COLOR_PLAYER_BLACK: Color = Color::BLACK;
+const CELL_COLOR_HOVERED: Color = Color::Rgba {
     red: 17. / 256.,
     green: 66. / 256.,
     blue: 1.,
     alpha: 1.,
 };
-const CELL_CLICKABLE_COLOR: Color = Color::RED;
+const CELL_COLOR_CLICKABLE: Color = Color::RED;
 const BACKGROUND_COLOR: Color = Color::Rgba {
     red: 145. / 256.,
     green: 145. / 256.,
@@ -57,14 +59,19 @@ fn setup_game() {
         .add_plugins(GameStatePlugin {
             game_plugin: GamePlugin {
                 first_turn: FIRST_TURN,
-                board_settings: BoardSettings {
-                    board_size_x: BOARD_SIZE_X.try_into().unwrap(),
-                    board_size_y: BOARD_SIZE_Y.try_into().unwrap(),
-                    cell_color: CELL_COLOR,
-                    cell_hovered_color: CELL_HOVERED_COLOR,
-                    cell_clickable_color: CELL_CLICKABLE_COLOR,
-                    background_color: BACKGROUND_COLOR,
-                },
+                board_settings: BoardSettings::new(
+                    BOARD_SIZE_X.try_into().unwrap(),
+                    BOARD_SIZE_Y.try_into().unwrap(),
+                    CELL_COLOR_HOVERED,
+                    CELL_COLOR_CLICKABLE,
+                    [
+                        (Player::None, CELL_COLOR_NORMAL),
+                        (Player::White, CELL_COLOR_PLAYER_WHITE),
+                        (Player::Black, CELL_COLOR_PLAYER_BLACK),
+                    ]
+                    .into_iter(),
+                    BACKGROUND_COLOR,
+                ),
             },
         })
         .run();
