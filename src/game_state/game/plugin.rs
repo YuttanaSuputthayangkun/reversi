@@ -39,19 +39,13 @@ impl Plugin for GamePlugin {
                     )
                         .chain()
                         .run_if(
-                            // todo: check if we can use resource_added
                             on_event::<event::CellClick>()
                                 .or_else(resource_added::<resource::BoardCellEntities>()), // just for after init
                         ),
                     util::send_default_event::<event::TurnChange>
                         .run_if(on_event::<event::CellClick>()),
-                    system::change_cell_color, // todo: add run condition
-                    (
-                        system::update_turn,
-                        system::clear_cell_clickable,
-                        system::update_cell_clickable,
-                    )
-                        .run_if(on_event::<event::TurnChange>()),
+                    system::change_cell_color,
+                    (system::update_turn,).run_if(on_event::<event::TurnChange>()),
                     (system::clear_cell_clickable, system::update_cell_clickable)
                         .chain()
                         .run_if(
