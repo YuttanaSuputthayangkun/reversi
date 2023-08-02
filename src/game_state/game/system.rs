@@ -409,14 +409,30 @@ pub fn change_cell_color(
     }
 }
 
-pub fn update_turn(mut game_data: ResMut<resource::GameData>) {
+pub fn update_turn(
+    mut game_data: ResMut<resource::GameData>,
+    mut turn_stuck_reader: EventReader<event::TurnStuck>,
+) {
+    let is_turn_stuck = turn_stuck_reader.iter().next().is_some();
+    let turn = game_data.turn().clone();
+    game_data.update_turn_stuck(turn, is_turn_stuck);
+
     game_data.update_turn();
+
     {
         let turn = game_data.turn();
         info!("update_turn to player({:?})", turn);
     }
 }
 
+pub fn is_turn_stuck(query: Query<&component::Clickable>) -> bool {
+    query.iter().find(|&clickable| **clickable).is_none()
+}
+
 pub fn check_win_condition(game_data: Res<resource::GameData>) {
-    // todo
+    if game_data.is_turn_stuck() {
+        todo!("The game has ended, there's clickable cell anymore for both players.")
+    } else {
+        info!("Not all player are stuck. You can proceed.");
+    }
 }

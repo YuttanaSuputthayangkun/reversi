@@ -117,7 +117,7 @@ impl Player {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Turn {
     Black,
     White,
@@ -147,6 +147,7 @@ pub struct GameData {
     turn: Turn,
     turn_count: u16,
     board: Board,
+    turn_stuck: HashMap<Turn, bool>,
 }
 
 impl GameData {
@@ -158,6 +159,9 @@ impl GameData {
             turn: first_turn,
             turn_count: 0,
             board: board,
+            turn_stuck: [(first_turn, false), (first_turn.next(), false)]
+                .into_iter()
+                .collect(),
         }
     }
 
@@ -184,5 +188,13 @@ impl GameData {
 
     pub fn board_mut(&mut self) -> &mut Board {
         &mut self.board
+    }
+
+    pub fn update_turn_stuck(&mut self, turn: Turn, is_stuck: bool) {
+        self.turn_stuck.insert(turn, is_stuck);
+    }
+
+    pub fn is_turn_stuck(&self) -> bool {
+        self.turn_stuck.values().all(|&is_stuck| is_stuck)
     }
 }

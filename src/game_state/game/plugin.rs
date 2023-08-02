@@ -23,6 +23,7 @@ impl Plugin for GamePlugin {
             .add_event::<event::PlayerCellChanged>()
             .add_event::<event::CellClick>()
             .add_event::<event::TurnChange>()
+            .add_event::<event::TurnStuck>()
             .add_systems(OnEnter(GameState::Game), system::spawn_board_ui.chain())
             .add_systems(
                 OnExit(GameState::Game),
@@ -44,8 +45,10 @@ impl Plugin for GamePlugin {
                         ),
                     util::send_default_event::<event::TurnChange>
                         .run_if(on_event::<event::CellClick>()),
-                    (system::update_turn, system::check_win_condition)
-                        .run_if(on_event::<event::TurnChange>()),
+                    util::send_default_event::<event::TurnStuck>.run_if(system::is_turn_stuck),
+                    system::update_turn.run_if(
+                        on_event::<event::TurnChange>().or_else(on_event::<event::TurnStuck>()),
+                    ),
                     (system::clear_cell_clickable, system::update_cell_clickable)
                         .chain()
                         .run_if(
@@ -53,6 +56,7 @@ impl Plugin for GamePlugin {
                                 .or_else(resource_added::<resource::BoardCellEntities>()), // just for after init
                         ),
                     system::change_cell_color,
+                    system::check_win_condition.run_if(on_event::<event::TurnStuck>()),
                 )
                     .chain()
                     .run_if(in_state(GameState::Game)),

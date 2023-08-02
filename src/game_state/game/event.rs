@@ -13,3 +13,6 @@ pub struct PlayerCellChanged {
     pub player: data::Player,
     pub board_position: board::BoardPosition,
 }
+
+#[derive(Event, Default)]
+pub struct TurnStuck;
