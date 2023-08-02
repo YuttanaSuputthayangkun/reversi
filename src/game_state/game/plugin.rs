@@ -35,8 +35,8 @@ impl Plugin for GamePlugin {
                     system::set_initial_player_cells, // todo: find out how to not run this in update loop
                     system::button_interaction_system, // send event::CellClick
                     (
-                        system::change_clicked_player_cell, // check if it's fine to be there
-                        system::change_opposite_player_cells, // check if it's fine to be there
+                        system::change_clicked_player_cell,
+                        system::change_opposite_player_cells,
                     )
                         .chain()
                         .run_if(
