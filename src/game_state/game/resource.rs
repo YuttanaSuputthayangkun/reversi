@@ -3,8 +3,7 @@ use bevy::{
     utils::HashMap,
 };
 
-use super::board;
-use super::data;
+use super::{board, data, util::IterEntity};
 
 #[derive(Resource, Clone, Deref)]
 pub struct BoardSettings(#[deref] pub data::BoardSettings);
@@ -29,5 +28,12 @@ pub struct BoardCellEntities(HashMap<board::BoardPosition, Entity>);
 impl Default for BoardCellEntities {
     fn default() -> Self {
         Self(Default::default())
+    }
+}
+
+impl IterEntity for BoardCellEntities {
+    fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
+        let iter = self.values().map(|x| x.clone());
+        Box::new(iter)
     }
 }

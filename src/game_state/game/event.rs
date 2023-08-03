@@ -16,3 +16,6 @@ pub struct PlayerCellChanged {
 
 #[derive(Event, Default)]
 pub struct TurnStuck;
+
+#[derive(Event, Default)]
+pub struct AfterInit;

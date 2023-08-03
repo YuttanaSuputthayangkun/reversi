@@ -57,9 +57,9 @@ fn setup_game() {
             ..default()
         }))
         .add_plugins(GameStatePlugin {
-            game_plugin: GamePlugin {
-                first_turn: FIRST_TURN,
-                board_settings: BoardSettings::new(
+            game_plugin: GamePlugin::new(
+                FIRST_TURN,
+                BoardSettings::new(
                     BOARD_SIZE_X.try_into().unwrap(),
                     BOARD_SIZE_Y.try_into().unwrap(),
                     CELL_COLOR_HOVERED,
@@ -72,7 +72,7 @@ fn setup_game() {
                     .into_iter(),
                     BACKGROUND_COLOR,
                 ),
-            },
+            ),
         })
         .run();
 }

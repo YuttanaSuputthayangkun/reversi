@@ -142,8 +142,9 @@ impl Into<Player> for Turn {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GameData {
+    first_turn: Turn,
     turn: Turn,
     turn_count: u16,
     board: Board,
@@ -156,6 +157,7 @@ impl GameData {
             board::Size::new(board_size_x.size().into(), board_size_y.size().into()).unwrap();
         let board = Board::new(size);
         GameData {
+            first_turn: first_turn,
             turn: first_turn,
             turn_count: 0,
             board: board,
@@ -196,5 +198,12 @@ impl GameData {
 
     pub fn is_turn_stuck(&self) -> bool {
         self.turn_stuck.values().all(|&is_stuck| is_stuck)
+    }
+
+    pub fn reset(&mut self) {
+        self.turn = self.first_turn.clone();
+        self.turn_count = 0;
+        self.board = Board::new(self.board.size.clone());
+        self.turn_stuck = HashMap::<Turn, bool>::default();
     }
 }

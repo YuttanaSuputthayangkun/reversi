@@ -11,13 +11,17 @@ use bevy::utils::HashMap;
 
 use super::*;
 
+pub fn init_game_data(mut game_data: ResMut<resource::GameData>) {
+    game_data.reset();
+}
+
 pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::BoardSettings>) {
     info!("spawn_board_ui");
 
-    let mut entities = resource::Entities::default();
-    let mut cell_entities = resource::BoardCellEntities::default();
     let camera = commands.spawn(Camera2dBundle::default()).id();
+    let mut entities = resource::Entities::default();
     entities.push(camera);
+    let mut cell_entities = resource::BoardCellEntities::default();
     let board = commands
         .spawn(NodeBundle {
             style: Style {
@@ -431,7 +435,7 @@ pub fn is_turn_stuck(query: Query<&component::Clickable>) -> bool {
 
 pub fn check_win_condition(game_data: Res<resource::GameData>) {
     if game_data.is_turn_stuck() {
-        todo!("The game has ended, there's clickable cell anymore for both players.")
+        info!("The game has ended, there's clickable cell anymore for both players.")
     } else {
         info!("Not all player are stuck. You can proceed.");
     }

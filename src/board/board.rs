@@ -41,3 +41,12 @@ impl<Cell: Default> Board<Cell> {
         self.cells.get_mut(p)
     }
 }
+
+impl<Cell: Clone + Default> Clone for Board<Cell> {
+    fn clone(&self) -> Self {
+        Self {
+            size: self.size.clone(),
+            cells: self.cells.clone(),
+        }
+    }
+}

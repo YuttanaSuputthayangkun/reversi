@@ -5,8 +5,17 @@ use super::*;
 
 #[derive(Clone)]
 pub struct GamePlugin {
-    pub first_turn: data::Turn,
-    pub board_settings: data::BoardSettings,
+    first_turn: data::Turn,
+    board_settings: data::BoardSettings,
+}
+
+impl GamePlugin {
+    pub fn new(first_turn: data::Turn, board_settings: data::BoardSettings) -> Self {
+        GamePlugin {
+            first_turn: first_turn,
+            board_settings: board_settings,
+        }
+    }
 }
 
 impl Plugin for GamePlugin {
@@ -20,14 +29,27 @@ impl Plugin for GamePlugin {
                 )
                 .into(),
             )
+            .add_event::<event::AfterInit>()
             .add_event::<event::PlayerCellChanged>()
             .add_event::<event::CellClick>()
             .add_event::<event::TurnChange>()
             .add_event::<event::TurnStuck>()
-            .add_systems(OnEnter(GameState::Game), system::spawn_board_ui.chain())
+            .add_systems(
+                OnEnter(GameState::Game),
+                (
+                    system::init_game_data,
+                    system::spawn_board_ui,
+                    util::send_default_event::<event::AfterInit>, // TODO: check if Bevy has event for OnEnter
+                )
+                    .chain(),
+            )
             .add_systems(
                 OnExit(GameState::Game),
-                despawn_entities_and_clear_resource::<resource::Entities>,
+                (
+                    despawn_entities_and_clear_resource::<resource::Entities>,
+                    despawn_entities_and_clear_resource::<resource::BoardCellEntities>,
+                )
+                    .chain(),
             )
             .add_systems(
                 Update,
@@ -40,8 +62,7 @@ impl Plugin for GamePlugin {
                     )
                         .chain()
                         .run_if(
-                            on_event::<event::CellClick>()
-                                .or_else(resource_added::<resource::BoardCellEntities>()), // just for after init
+                            on_event::<event::CellClick>().or_else(on_event::<event::AfterInit>()), // just for after init
                         ),
                     util::send_default_event::<event::TurnChange>
                         .run_if(on_event::<event::CellClick>()),
@@ -52,8 +73,7 @@ impl Plugin for GamePlugin {
                     (system::clear_cell_clickable, system::update_cell_clickable)
                         .chain()
                         .run_if(
-                            on_event::<event::TurnChange>()
-                                .or_else(resource_added::<resource::BoardCellEntities>()), // just for after init
+                            on_event::<event::TurnChange>().or_else(on_event::<event::AfterInit>()), // just for after init
                         ),
                     system::change_cell_color,
                     system::check_win_condition.run_if(on_event::<event::TurnStuck>()),

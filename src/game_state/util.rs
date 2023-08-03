@@ -38,6 +38,10 @@ where
     event_writer.send_default();
 }
 
+pub fn init_resource<Resource: bevy::prelude::Resource + Default>(mut commands: Commands) {
+    commands.init_resource::<Resource>();
+}
+
 pub fn remove_resource<Resource: bevy::prelude::Resource>(mut commands: Commands) {
     commands.remove_resource::<Resource>();
 }
