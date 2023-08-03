@@ -28,12 +28,6 @@ const CELL_COLOR_NORMAL: Color = Color::Rgba {
 };
 const CELL_COLOR_PLAYER_WHITE: Color = Color::WHITE;
 const CELL_COLOR_PLAYER_BLACK: Color = Color::BLACK;
-const CELL_COLOR_HOVERED: Color = Color::Rgba {
-    red: 17. / 256.,
-    green: 66. / 256.,
-    blue: 1.,
-    alpha: 1.,
-};
 const CELL_COLOR_CLICKABLE: Color = Color::RED;
 const BACKGROUND_COLOR: Color = Color::Rgba {
     red: 145. / 256.,
@@ -62,7 +56,6 @@ fn setup_game() {
                 BoardSettings::new(
                     BOARD_SIZE_X.try_into().unwrap(),
                     BOARD_SIZE_Y.try_into().unwrap(),
-                    CELL_COLOR_HOVERED,
                     CELL_COLOR_CLICKABLE,
                     [
                         (Player::None, CELL_COLOR_NORMAL),

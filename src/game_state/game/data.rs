@@ -39,7 +39,6 @@ impl TryFrom<u16> for BoardSize {
 pub struct BoardSettings {
     board_size_x: BoardSize,
     board_size_y: BoardSize,
-    cell_color_hovered: Color,
     cell_color_clickable: Color,
     cell_player_color_map: HashMap<Player, Color>,
     background_color: Color,
@@ -49,7 +48,6 @@ impl BoardSettings {
     pub fn new(
         board_size_x: BoardSize,
         board_size_y: BoardSize,
-        cell_color_hovered: Color,
         cell_color_clickable: Color,
         cell_player_colors: impl Iterator<Item = (Player, Color)>,
         background_color: Color,
@@ -57,7 +55,6 @@ impl BoardSettings {
         BoardSettings {
             board_size_x: board_size_x,
             board_size_y: board_size_y,
-            cell_color_hovered,
             cell_color_clickable,
             cell_player_color_map: cell_player_colors.collect::<HashMap<_, _>>(),
             background_color: background_color,
@@ -70,10 +67,6 @@ impl BoardSettings {
 
     pub fn board_size_y(&self) -> BoardSize {
         self.board_size_y
-    }
-
-    pub fn cell_color_hovered(&self) -> Color {
-        self.cell_color_hovered
     }
 
     pub fn cell_color_clickable(&self) -> Color {
