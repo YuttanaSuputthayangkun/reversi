@@ -154,12 +154,18 @@ impl Into<Player> for Turn {
 }
 
 #[derive(Debug, Clone)]
+pub struct TurnStuckInfo {
+    turn: Turn,
+    turn_count: u16,
+}
+
+#[derive(Debug, Clone)]
 pub struct GameData {
     first_turn: Turn,
     turn: Turn,
     turn_count: u16,
     board: Board,
-    turn_stuck: HashMap<Turn, bool>,
+    turn_stuck_info_list: Vec<TurnStuckInfo>,
 }
 
 impl GameData {
@@ -172,9 +178,7 @@ impl GameData {
             turn: first_turn,
             turn_count: 0,
             board: board,
-            turn_stuck: [(first_turn, false), (first_turn.next(), false)]
-                .into_iter()
-                .collect(),
+            turn_stuck_info_list: vec![],
         }
     }
 
@@ -190,7 +194,7 @@ impl GameData {
         self.current_player().next()
     }
 
-    pub fn update_turn(&mut self) {
+    pub fn next_turn(&mut self) {
         self.turn = self.turn.next();
         self.turn_count += 1;
     }
@@ -203,18 +207,30 @@ impl GameData {
         &mut self.board
     }
 
-    pub fn update_turn_stuck(&mut self, turn: Turn, is_stuck: bool) {
-        self.turn_stuck.insert(turn, is_stuck);
+    pub fn notify_turn_stuck(&mut self) {
+        let new_info = TurnStuckInfo {
+            turn: self.turn,
+            turn_count: self.turn_count,
+        };
+        self.turn_stuck_info_list.push(new_info);
     }
 
     pub fn is_turn_stuck(&self) -> bool {
-        self.turn_stuck.values().all(|&is_stuck| is_stuck)
+        let mut last_two_turns = self.turn_stuck_info_list.iter().rev();
+        match (last_two_turns.next(), last_two_turns.next()) {
+            (Some(last_turn), Some(before_last_turn)) => {
+                let is_consecutive = (last_turn.turn_count - before_last_turn.turn_count) == 1;
+                let both_stuck = last_turn.turn.next() == before_last_turn.turn;
+                is_consecutive && both_stuck
+            }
+            _ => false,
+        }
     }
 
     pub fn reset(&mut self) {
         self.turn = self.first_turn.clone();
         self.turn_count = 0;
         self.board = Board::new(self.board.size.clone());
-        self.turn_stuck = HashMap::<Turn, bool>::default();
+        self.turn_stuck_info_list = vec![];
     }
 }

@@ -339,10 +339,11 @@ pub fn update_turn(
     mut turn_stuck_reader: EventReader<event::TurnStuck>,
 ) {
     let is_turn_stuck = turn_stuck_reader.iter().next().is_some();
-    let turn = game_data.turn().clone();
-    game_data.update_turn_stuck(turn, is_turn_stuck);
+    if is_turn_stuck {
+        game_data.notify_turn_stuck();
+    }
 
-    game_data.update_turn();
+    game_data.next_turn();
 
     {
         let turn = game_data.turn();
@@ -350,15 +351,15 @@ pub fn update_turn(
     }
 }
 
-pub fn is_turn_stuck(query: Query<&component::Clickable>) -> bool {
-    query.iter().find(|&clickable| **clickable).is_none()
+pub fn any_clickable_cell(query: Query<&component::Clickable>) -> bool {
+    query.iter().find(|&clickable| **clickable).is_some()
 }
 
 pub fn check_win_condition(game_data: Res<resource::GameData>) {
     if game_data.is_turn_stuck() {
         info!("The game has ended, there's clickable cell anymore for both players.")
     } else {
-        info!("Not all player are stuck. You can proceed.");
+        // info!("Not all player are stuck. You can proceed.");
     }
 }
 

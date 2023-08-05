@@ -67,7 +67,8 @@ impl Plugin for GamePlugin {
                     util::send_default_event::<event::TurnChange>
                         .run_if(on_event::<event::CellClick>()),
                     util::send_default_event::<event::TurnStuck>.run_if(
-                        system::is_turn_stuck.and_then(not(on_event::<event::AfterInit>())),
+                        not(system::any_clickable_cell) // no cell to click
+                            .and_then(not(on_event::<event::AfterInit>())), // skip init
                     ),
                     system::update_turn.run_if(
                         on_event::<event::TurnChange>().or_else(on_event::<event::TurnStuck>()),
@@ -75,7 +76,9 @@ impl Plugin for GamePlugin {
                     (system::clear_cell_clickable, system::update_cell_clickable)
                         .chain()
                         .run_if(
-                            on_event::<event::TurnChange>().or_else(on_event::<event::AfterInit>()),
+                            on_event::<event::TurnChange>()
+                                .or_else(on_event::<event::TurnStuck>())
+                                .or_else(on_event::<event::AfterInit>()),
                         ),
                     system::change_cell_color,
                     system::change_board_background_color,
