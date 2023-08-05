@@ -62,20 +62,23 @@ impl Plugin for GamePlugin {
                     )
                         .chain()
                         .run_if(
-                            on_event::<event::CellClick>().or_else(on_event::<event::AfterInit>()), // just for after init
+                            on_event::<event::CellClick>().or_else(on_event::<event::AfterInit>()),
                         ),
                     util::send_default_event::<event::TurnChange>
                         .run_if(on_event::<event::CellClick>()),
-                    util::send_default_event::<event::TurnStuck>.run_if(system::is_turn_stuck),
+                    util::send_default_event::<event::TurnStuck>.run_if(
+                        system::is_turn_stuck.and_then(not(on_event::<event::AfterInit>())),
+                    ),
                     system::update_turn.run_if(
                         on_event::<event::TurnChange>().or_else(on_event::<event::TurnStuck>()),
                     ),
                     (system::clear_cell_clickable, system::update_cell_clickable)
                         .chain()
                         .run_if(
-                            on_event::<event::TurnChange>().or_else(on_event::<event::AfterInit>()), // just for after init
+                            on_event::<event::TurnChange>().or_else(on_event::<event::AfterInit>()),
                         ),
                     system::change_cell_color,
+                    system::change_board_background_color,
                     system::check_win_condition.run_if(on_event::<event::TurnStuck>()),
                 )
                     .chain()

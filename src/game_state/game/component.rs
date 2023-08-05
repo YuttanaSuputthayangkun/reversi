@@ -6,6 +6,9 @@ use super::{board, data};
 pub struct BoardPosition(pub board::BoardPosition);
 
 #[derive(Component)]
+pub struct BoardParent;
+
+#[derive(Component)]
 pub struct Cell;
 
 #[derive(Component, Deref, DerefMut)]

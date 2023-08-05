@@ -1,6 +1,5 @@
 use crate::board;
 use bevy::prelude::*;
-use itertools::Itertools;
 
 use super::position_pairs;
 pub use data::{Board, BoardCell, BoardSettings, Player};
@@ -15,14 +14,16 @@ pub fn init_game_data(mut game_data: ResMut<resource::GameData>) {
     game_data.reset();
 }
 
-pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::BoardSettings>) {
-    info!("spawn_board_ui");
-
+pub fn spawn_board_ui(
+    mut commands: Commands,
+    board_settings: Res<resource::BoardSettings>,
+    game_data: Res<resource::GameData>,
+) {
     let camera = commands.spawn(Camera2dBundle::default()).id();
     let mut entities = resource::Entities::default();
     entities.push(camera);
     let mut cell_entities = resource::BoardCellEntities::default();
-    let board = commands
+    let ui = commands
         .spawn(NodeBundle {
             style: Style {
                 display: Display::Grid,
@@ -32,10 +33,14 @@ pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::Boar
                 grid_template_columns: vec![GridTrack::max_content()],
                 ..default()
             },
-            background_color: Color::GRAY.into(),
+            background_color: board_settings
+                .board_player_color(&Into::<data::Player>::into(game_data.turn().clone()))
+                .into(),
             ..default()
         })
+        .insert(component::BoardParent)
         .with_children(|builder| {
+            // spawn the actual board
             builder
                 .spawn(NodeBundle {
                     style: Style {
@@ -72,7 +77,7 @@ pub fn spawn_board_ui(mut commands: Commands, board_settings: Res<resource::Boar
                 });
         })
         .id();
-    entities.push(board);
+    entities.push(ui);
     commands.insert_resource(entities);
     commands.insert_resource(cell_entities);
 }
@@ -88,7 +93,7 @@ pub fn spawn_cell(
                 aspect_ratio: Some(1.0),
                 ..default()
             },
-            background_color: board_settings.background_color().into(),
+            background_color: board_settings.cell_color_background().into(),
             ..default()
         })
         .insert(component::Cell)
@@ -130,7 +135,6 @@ pub fn set_initial_player_cells(
             data::Player::Black,
         ),
     ];
-    info!("{:?}", initial_cell_positions);
     let initial_cell_positions = initial_cell_positions
         .into_iter()
         .collect::<HashMap<board::BoardPosition, data::Player>>();
@@ -160,7 +164,6 @@ pub fn button_interaction_system(
 ) {
     for (interaction, board_pos, clickable) in interaction_query.iter_mut() {
         if interaction == &Interaction::Pressed && **clickable {
-            info!("clicked: {:?}", board_pos.deref());
             cell_click_event.send(event::CellClick(board_pos.deref().clone()));
         }
     }
@@ -179,7 +182,6 @@ pub fn change_clicked_player_cell(
             .find(|(pos, _)| pos.eq(cell_click))
             .unwrap();
         let new_player = game_data.current_player();
-        info!("change_clicked_player_cell new_player({:?})", &new_player);
         **matched_cell_player = new_player;
 
         // update player on the game data
@@ -201,16 +203,6 @@ pub fn change_opposite_player_cells(
     if let Some(player_cell_changed) = player_cell_changed_reader.iter().next() {
         let current_player = game_data.current_player();
         let opposite_player = game_data.opposite_player();
-
-        // info!(
-        //     "current_player({:?}) opposite_player({:?})",
-        //     &current_player, &opposite_player
-        // );
-
-        info!(
-            "change_opposite_player_cells player_cell_changed position({:?}) to player({:?})",
-            &player_cell_changed.board_position, &player_cell_changed.player
-        );
 
         // try to get opposite player cell's position that connects with current player in all directions
         let opposite_positions = board::DIRECTIONS
@@ -237,11 +229,6 @@ pub fn change_opposite_player_cells(
                     }
                 };
 
-                info!(
-                    "direction({:?}) opposite_positions({:?})",
-                    direction, &opposite_positions
-                );
-
                 if found_same_player_on_other_side {
                     opposite_positions
                 } else {
@@ -250,11 +237,6 @@ pub fn change_opposite_player_cells(
             })
             .map(|pos| (pos, ()))
             .collect::<HashMap<board::BoardPosition, ()>>();
-
-        info!(
-            "change_opposite_player_cells opposite_positions({:?})",
-            &opposite_positions
-        );
 
         // update entities
         for (board_position, mut player) in query.iter_mut() {
@@ -283,54 +265,14 @@ pub fn update_cell_clickable(
     game_data: Res<resource::GameData>,
     board_entities: Res<resource::BoardCellEntities>,
 ) {
-    let cell_group = cells
-        .iter()
-        .sorted_by(|(_, a), (_, b)| a.cmp(b))
-        .group_by(|x| x.1.deref());
-    let cell_log = cell_group
-        .into_iter()
-        .map(|(player, cells)| {
-            let cell_texts = cells
-                .map(|(pos, _)| format!("({},{})", pos.x, pos.y))
-                .collect::<Vec<_>>();
-            let cell_count = cell_texts.iter().count();
-            let cell_texts = cell_texts.into_iter().collect::<Vec<_>>().join(", ");
-            format!(
-                "(player({:?}), count({}) cells({}))",
-                player, cell_count, cell_texts
-            )
-        })
-        .collect::<Vec<_>>()
-        .join(", ");
-    info!(
-        "update_cell_clickable cells count({}), turn({:?}) cells({})",
-        cells.iter().count(),
-        game_data.as_ref().turn(),
-        cell_log
-    );
-
     let game_data = &**game_data;
     let current_player = game_data.current_player();
     let opposite_player = game_data.opposite_player();
-    info!(
-        "update_cell_clickable current_player({:?}) opposite_player({:?})",
-        &current_player, &opposite_player
-    );
-
-    // todo: remove after debug
-    let mut clickable_positions: Vec<board::BoardPosition> = vec![];
-
     for (board_position, player) in cells.iter_mut() {
         // check only if the cell matches the current turn player
         if player.ne(&current_player) {
             continue;
         }
-
-        info!(
-            "check on player({:?}) pos({:?})",
-            &player,
-            board_position.deref()
-        );
 
         for direction in board::DIRECTIONS.iter() {
             let mut iter = board::Iter::new(
@@ -340,22 +282,10 @@ pub fn update_cell_clickable(
                 1,
             );
 
-            {
-                let board_position = board_position.deref().clone();
-                info!(
-                    "direction({:?}) from position({:?})",
-                    &direction, board_position
-                );
-            }
-
             // the next cell has to be the opposite player, skip loop if not
             // "if let &&" pattern is not available here
             match iter.next() {
                 Some((_, player)) if player.ne(&opposite_player) => {
-                    info!(
-                        "The next is not opposite player! It's player({:?})",
-                        &player
-                    );
                     continue;
                 }
                 _ => (),
@@ -370,18 +300,9 @@ pub fn update_cell_clickable(
                 commands
                     .entity(entity.clone())
                     .insert(component::Clickable(true)); // todo: check if there's any way to change the component instead of insert
-                clickable_positions.push(cell_position.clone());
             }
         }
     }
-
-    // todo: remove after debug
-    let cell_strings: Vec<String> = clickable_positions
-        .iter()
-        .map(|p| format!("({}, {})", p.x, p.y))
-        .collect();
-    let cell_string = cell_strings.join(", ");
-    info!("clickable cells: {:?}", &cell_string);
 }
 
 pub fn change_cell_color(
@@ -409,7 +330,7 @@ pub fn change_cell_color(
             continue;
         }
 
-        *background_color = board_settings.player_cell_color(player).into();
+        *background_color = board_settings.cell_player_color(player).into();
     }
 }
 
@@ -438,5 +359,53 @@ pub fn check_win_condition(game_data: Res<resource::GameData>) {
         info!("The game has ended, there's clickable cell anymore for both players.")
     } else {
         info!("Not all player are stuck. You can proceed.");
+    }
+}
+
+pub fn change_board_background_color(
+    mut query: Query<&mut BackgroundColor, With<component::BoardParent>>,
+    game_data: ResMut<resource::GameData>,
+    board_settings: Res<resource::BoardSettings>,
+    time: Res<Time>,
+    mut begin_color: Local<Option<Color>>,
+    mut timer: Local<Option<Timer>>,
+    turn_change_reader: EventReader<event::TurnChange>,
+) {
+    let background_color = query.iter_mut().next();
+    if background_color.is_none() {
+        info!("Cannot find background color of the board");
+        return;
+    }
+    let mut background_color = background_color.unwrap();
+
+    // init transition on turn change: save color on begin and start new timer
+    if !turn_change_reader.is_empty() {
+        *begin_color = Some(background_color.deref().0);
+
+        let duration = board_settings.board_player_color_change_duration();
+        let new_timer = Timer::new(duration, TimerMode::Once);
+        *timer = Some(new_timer);
+    }
+
+    // check if timer exist
+    let is_finished: bool =
+        if let (Some(timer), Some(begin_color)) = (timer.deref_mut(), begin_color.deref()) {
+            // apply color, Bevy doesn't have color lerping now, so I use Vec4's
+            let begin_color: Vec4 = begin_color.clone().into();
+            let target_player: data::Player = game_data.turn().clone().into();
+            let target_color: Vec4 = board_settings.board_player_color(&target_player).into();
+            let (r, g, b, _) = begin_color.lerp(target_color, timer.percent()).into();
+            *background_color = Color::rgba(r, g, b, 1.).into();
+
+            timer.tick(time.delta());
+
+            timer.just_finished()
+        } else {
+            false
+        };
+
+    if is_finished {
+        *begin_color = None;
+        *timer = None;
     }
 }

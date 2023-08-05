@@ -4,7 +4,7 @@ use bevy::{
 };
 
 use super::*;
-use std::ops::Rem;
+use std::{ops::Rem, time::Duration};
 
 pub type BoardCell = data::Player;
 pub type Board = board::Board<BoardCell>;
@@ -41,7 +41,9 @@ pub struct BoardSettings {
     board_size_y: BoardSize,
     cell_color_clickable: Color,
     cell_player_color_map: HashMap<Player, Color>,
-    background_color: Color,
+    cell_color_background: Color,
+    board_player_color_map: HashMap<Player, Color>,
+    board_player_color_change_duration: Duration,
 }
 
 impl BoardSettings {
@@ -50,14 +52,18 @@ impl BoardSettings {
         board_size_y: BoardSize,
         cell_color_clickable: Color,
         cell_player_colors: impl Iterator<Item = (Player, Color)>,
-        background_color: Color,
+        cell_color_background: Color,
+        board_player_colors: impl Iterator<Item = (Player, Color)>,
+        board_player_color_change_duration: Duration,
     ) -> Self {
         BoardSettings {
             board_size_x: board_size_x,
             board_size_y: board_size_y,
             cell_color_clickable,
             cell_player_color_map: cell_player_colors.collect::<HashMap<_, _>>(),
-            background_color: background_color,
+            cell_color_background,
+            board_player_color_map: board_player_colors.collect::<HashMap<_, _>>(),
+            board_player_color_change_duration,
         }
     }
 
@@ -73,16 +79,28 @@ impl BoardSettings {
         self.cell_color_clickable
     }
 
-    pub fn background_color(&self) -> Color {
-        self.background_color
+    pub fn cell_color_background(&self) -> Color {
+        self.cell_color_background
     }
 
-    pub fn player_cell_color(&self, player: &Player) -> Color {
+    pub fn cell_player_color(&self, player: &Player) -> Color {
         self.cell_player_color_map
             .get(player)
             .map(|c| c.clone())
             .ok_or_else(|| format!("Cannot find cell color for player: {:?}", &player))
             .unwrap()
+    }
+
+    pub fn board_player_color(&self, player: &Player) -> Color {
+        self.board_player_color_map
+            .get(player)
+            .map(|c| c.clone())
+            .ok_or_else(|| format!("Cannot find cell color for player: {:?}", &player))
+            .unwrap()
+    }
+
+    pub fn board_player_color_change_duration(&self) -> Duration {
+        self.board_player_color_change_duration
     }
 }
 
