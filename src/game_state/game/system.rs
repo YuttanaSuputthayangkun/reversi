@@ -372,11 +372,12 @@ pub fn check_win_condition(
             .iter()
             .map(|x| x.deref())
             .cloned()
-            // .sorted_by(|a, b| a.cmp(b)) // TODO: check if sorting like this is okay
+            .sorted_by(|a, b| a.cmp(b))
             .group_by(|x| x.clone())
             .into_iter()
             .map(|(player, group)| (player, group.count()))
             .collect();
+
         result_event_writer.send(result::event::ResultEvent(result::data::ResultData {
             scores: [
                 (
