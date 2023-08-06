@@ -47,7 +47,7 @@ impl Plugin for GamePlugin {
                 OnExit(GameState::Game),
                 (
                     despawn_entities_and_clear_resource::<resource::Entities>,
-                    despawn_entities_and_clear_resource::<resource::BoardCellEntities>,
+                    util::remove_resource::<resource::BoardCellEntities>,
                 )
                     .chain(),
             )

@@ -17,7 +17,7 @@ impl DebugGameState {
 
 pub(super) fn add_debug(app: &mut App) {
     app.add_systems(Startup, || info!("Debug mode enabled."))
-        .add_systems(Update, debug::next_debug_state_on_keyboard_press);
+        .add_systems(Last, debug::next_debug_state_on_keyboard_press);
 }
 
 fn next_debug_state_on_keyboard_press(

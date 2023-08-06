@@ -26,7 +26,9 @@ pub fn despawn_entities_and_clear_resource<Resource>(
     Resource: bevy::prelude::Resource + IterEntity,
 {
     for entity in resource.iter_entity() {
-        commands.entity(entity.clone()).despawn_recursive();
+        if let Some(entity) = commands.get_entity(entity.clone()) {
+            entity.despawn_recursive();
+        }
     }
     commands.remove_resource::<Resource>();
 }
@@ -49,10 +51,19 @@ pub fn remove_resource<Resource: bevy::prelude::Resource>(mut commands: Commands
 pub mod system_adapter {
     use bevy::prelude::{Event as BevyEvent, EventWriter, In};
 
-    pub fn send_event<Event>(In(event): In<Event>, mut event_writer: EventWriter<Event>)
+    pub fn send_event<Event, Input>(In(input): In<Input>, mut event_writer: EventWriter<Event>)
     where
-        Event: BevyEvent + Default,
+        Event: BevyEvent,
+        Input: Into<Event>,
     {
-        event_writer.send(event);
+        event_writer.send(input.into());
+    }
+
+    pub fn info_pipe<Data>(In(data): In<Data>) -> Data
+    where
+        Data: std::fmt::Debug,
+    {
+        bevy::prelude::info!("{:?}", &data);
+        data
     }
 }

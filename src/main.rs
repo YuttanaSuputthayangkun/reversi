@@ -12,8 +12,8 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use game_state::{
-    data::{Player, Turn},
-    plugin::{BoardSettings, GamePlugin, GameStatePlugin},
+    data::{Player, Settings as ResultSettings, Turn},
+    plugin::{BoardSettings, GamePlugin, GameStatePlugin, ResultPlugin},
 };
 
 const GAME_TITLE: &'static str = "Reversi";
@@ -57,6 +57,13 @@ const CELL_COLOR_BACKGROUND: Color = Color::Rgba {
     alpha: 1.,
 };
 
+const RESULT_COLOR_BACKGROUND: Color = Color::Rgba {
+    red: 0.5,
+    green: 0.5,
+    blue: 0.5,
+    alpha: 0.5,
+};
+
 fn main() {
     setup_game();
 }
@@ -94,6 +101,11 @@ fn setup_game() {
                     BOARD_COLOR_PLAYER_CHANGE_DURATION,
                 ),
             ),
+            result_plugin: ResultPlugin {
+                settings: ResultSettings {
+                    color_background: RESULT_COLOR_BACKGROUND.into(),
+                },
+            },
         })
         .run();
 }

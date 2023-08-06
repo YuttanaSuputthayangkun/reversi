@@ -1,12 +1,12 @@
 use crate::board;
 use bevy::prelude::*;
+use itertools::Itertools;
 
 use super::position_pairs;
-pub use data::{Board, BoardCell, BoardSettings, Player};
-
+use bevy::utils::HashMap;
 use std::ops::{Deref, DerefMut};
 
-use bevy::utils::HashMap;
+pub use data::{Board, BoardCell, BoardSettings, Player};
 
 use super::*;
 
@@ -355,11 +355,48 @@ pub fn any_clickable_cell(query: Query<&component::Clickable>) -> bool {
     query.iter().find(|&clickable| **clickable).is_some()
 }
 
-pub fn check_win_condition(game_data: Res<resource::GameData>) {
+pub fn check_win_condition(
+    query: Query<&component::Player, With<component::Cell>>,
+    game_data: Res<resource::GameData>,
+    mut next_game_state: ResMut<NextState<GameState>>,
+    mut result_event_writer: EventWriter<result::event::ResultEvent>,
+) {
     if game_data.is_turn_stuck() {
-        info!("The game has ended, there's clickable cell anymore for both players.")
-    } else {
-        // info!("Not all player are stuck. You can proceed.");
+        info!("The game has ended, there's no clickable cell for both players.");
+
+        // go to the result game state
+        next_game_state.set(GameState::Result);
+
+        // calculate total score and send through the event
+        let cell_count_map: HashMap<data::Player, usize> = query
+            .iter()
+            .map(|x| x.deref())
+            .cloned()
+            // .sorted_by(|a, b| a.cmp(b)) // TODO: check if sorting like this is okay
+            .group_by(|x| x.clone())
+            .into_iter()
+            .map(|(player, group)| (player, group.count()))
+            .collect();
+        result_event_writer.send(result::event::ResultEvent(result::data::ResultData {
+            scores: [
+                (
+                    result::data::PlayerType::White,
+                    cell_count_map
+                        .get(&data::Player::White)
+                        .cloned()
+                        .unwrap_or_default() as u16,
+                ),
+                (
+                    result::data::PlayerType::Black,
+                    cell_count_map
+                        .get(&data::Player::Black)
+                        .cloned()
+                        .unwrap_or_default() as u16,
+                ),
+            ]
+            .into_iter()
+            .collect(),
+        }));
     }
 }
 

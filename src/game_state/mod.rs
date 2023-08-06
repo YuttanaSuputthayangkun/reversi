@@ -10,28 +10,36 @@ mod result;
 mod debug;
 
 use super::board;
-use game::plugin::GamePlugin;
 
 pub mod plugin {
     pub use super::{
         game::{data::BoardSettings, plugin::GamePlugin},
+        result::plugin::ResultPlugin,
         GameStatePlugin,
     };
 }
 
 pub mod data {
-    pub use super::game::data::{Player, Turn};
+    pub use super::{
+        game::data::{Player, Turn},
+        result::data::{ResultData, Settings},
+    };
+}
+
+pub mod event {
+    pub use super::result::event::ResultEvent;
 }
 
 pub struct GameStatePlugin {
-    pub game_plugin: GamePlugin,
+    pub game_plugin: game::plugin::GamePlugin,
+    pub result_plugin: result::plugin::ResultPlugin,
 }
 
 impl Plugin for GameStatePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_state::<GameState>()
             .add_plugins(self.game_plugin.clone())
-            .add_plugins(result::ResultPlugin);
+            .add_plugins(self.result_plugin.clone());
 
         #[cfg(feature = "debug")]
         debug::add_debug(app);
@@ -39,7 +47,7 @@ impl Plugin for GameStatePlugin {
 }
 
 #[derive(States, Debug, Hash, PartialEq, Eq, Clone, Default)]
-enum GameState {
+pub enum GameState {
     #[default]
     Game,
     Result,

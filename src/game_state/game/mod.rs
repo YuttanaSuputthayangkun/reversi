@@ -6,4 +6,4 @@ pub mod plugin;
 mod resource;
 mod system;
 
-use super::{board, position_pairs, util, GameState};
+use super::{board, position_pairs, result, util, GameState};
