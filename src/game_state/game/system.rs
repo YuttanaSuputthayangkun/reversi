@@ -447,3 +447,49 @@ pub fn change_board_background_color(
         *timer = None;
     }
 }
+
+pub(super) mod debug {
+    use std::time::Duration;
+
+    use super::*;
+
+    const DEBUG_KEYCODE: KeyCode = KeyCode::O;
+    const AUTO_CELL_CLICK_DELAY: Duration = Duration::from_millis(100);
+
+    pub fn auto_cell_click(
+        query: Query<(&component::Clickable, &component::BoardPosition)>,
+        key_press: Res<Input<KeyCode>>,
+        time: Res<Time>,
+        mut cell_click_event_writer: EventWriter<event::CellClick>,
+        mut timer: Local<Option<Timer>>,
+        mut is_enabled: Local<bool>,
+    ) {
+        // toggle on keypress
+        if key_press.just_pressed(DEBUG_KEYCODE) {
+            *is_enabled = !*is_enabled;
+        }
+
+        if !*is_enabled {
+            return;
+        }
+
+        if timer.is_none() {
+            let mut new_timer = Timer::default();
+            new_timer.set_duration(AUTO_CELL_CLICK_DELAY);
+            new_timer.set_mode(TimerMode::Once);
+            timer.replace(new_timer);
+        }
+
+        let timer = timer.as_mut().unwrap();
+        if timer.finished() {
+            let clickable_pos = query.iter().find(|(c, _)| ***c).map(|(_, pos)| pos);
+            if let Some(pos) = clickable_pos {
+                cell_click_event_writer.send(event::CellClick(pos.deref().clone()));
+
+                timer.reset();
+            }
+        }
+
+        timer.tick(time.delta());
+    }
+}

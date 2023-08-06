@@ -87,5 +87,10 @@ impl Plugin for GamePlugin {
                     .chain()
                     .run_if(in_state(GameState::Game)),
             );
+
+        #[cfg(feature = "debug")]
+        {
+            app.add_systems(Last, system::debug::auto_cell_click);
+        }
     }
 }
