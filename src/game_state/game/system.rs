@@ -448,6 +448,7 @@ pub fn change_board_background_color(
     }
 }
 
+#[cfg(feature = "debug")]
 pub(super) mod debug {
     use std::time::Duration;
 
