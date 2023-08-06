@@ -452,6 +452,8 @@ pub fn change_board_background_color(
 pub(super) mod debug {
     use std::time::Duration;
 
+    use rand::Rng;
+
     use super::*;
 
     const DEBUG_KEYCODE: KeyCode = KeyCode::O;
@@ -483,7 +485,21 @@ pub(super) mod debug {
 
         let timer = timer.as_mut().unwrap();
         if timer.finished() {
-            let clickable_pos = query.iter().find(|(c, _)| ***c).map(|(_, pos)| pos);
+            let clickable_positions: Vec<_> = query
+                .iter()
+                .filter(|(c, _)| ***c)
+                .map(|(_, pos)| pos)
+                .collect();
+            let clickable_pos = if clickable_positions.is_empty() {
+                None
+            } else {
+                // random pick
+                // TODO: maybe move this into utils
+                let pos =
+                    clickable_positions[rand::thread_rng().gen_range(0..clickable_positions.len())];
+                Some(pos)
+            };
+
             if let Some(pos) = clickable_pos {
                 cell_click_event_writer.send(event::CellClick(pos.deref().clone()));
 
