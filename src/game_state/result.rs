@@ -63,7 +63,7 @@ pub mod plugin {
 pub mod data {
     use bevy::{prelude::Color, utils::HashMap};
 
-    pub(super) const FONT_SIZE: f32 = 50.;
+    pub(super) const FONT_SIZE: f32 = 100.;
 
     #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
     pub enum PlayerType {
