@@ -24,16 +24,14 @@ pub mod plugin {
                     util::init_resource::<resource::Entities>,
                 )
                 .add_systems(
-                    First,
-                    system::show_result_screen
-                        .pipe(system_adapter::error)
-                        .run_if(
-                            in_state(GameState::Result).and_then(on_event::<event::ResultEvent>()),
-                        ),
-                )
-                .add_systems(
                     Update,
                     (
+                        system::show_result_screen
+                            .pipe(system_adapter::error)
+                            .run_if(
+                                in_state(GameState::Result)
+                                    .and_then(on_event::<event::ResultEvent>()),
+                            ),
                         system::check_button_click,
                         system::change_state.run_if(on_event::<event::ButtonClicked>()),
                     )
