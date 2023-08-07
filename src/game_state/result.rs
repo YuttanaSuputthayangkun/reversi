@@ -199,8 +199,7 @@ mod system {
                             font_size: data::FONT_SIZE,
                             color: settings.text_color.into(),
                         },
-                    )
-                    .with_style(Style { ..default() });
+                    );
                     let new_button = builder
                         .spawn(button_bundle)
                         .with_children(|x| {
@@ -224,7 +223,7 @@ mod system {
     ) {
         let button_press = query
             .iter()
-            .find(|(ref interaction, _)| interaction.deref().eq(&Interaction::Pressed));
+            .find(|(ref interaction, _)| (**interaction).eq(&Interaction::Pressed));
         if let Some((_, button_type)) = button_press {
             event_writer.send(button_type.deref().to_owned().into());
         }
