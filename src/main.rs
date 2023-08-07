@@ -12,7 +12,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use game_state::{
-    data::{Player, Settings as ResultSettings, Turn},
+    data::{Player, ResultPlayer, Settings as ResultSettings, Turn},
     plugin::{BoardSettings, GamePlugin, GameStatePlugin, ResultPlugin},
 };
 
@@ -57,7 +57,13 @@ const CELL_COLOR_BACKGROUND: Color = Color::Rgba {
     alpha: 1.,
 };
 
-const RESULT_COLOR_BACKGROUND: Color = Color::Rgba {
+// const RESULT_BACKGROUND_COLOR: Color = Color::Rgba {
+//     red: 0.5,
+//     green: 0.5,
+//     blue: 0.5,
+//     alpha: 0.5,
+// };
+const RESULT_TEXT_COLOR: Color = Color::Rgba {
     red: 0.5,
     green: 0.5,
     blue: 0.5,
@@ -103,7 +109,13 @@ fn setup_game() {
             ),
             result_plugin: ResultPlugin {
                 settings: ResultSettings {
-                    color_background: RESULT_COLOR_BACKGROUND.into(),
+                    text_color: RESULT_TEXT_COLOR.into(),
+                    player_color_map: [
+                        (ResultPlayer::Black, CELL_COLOR_PLAYER_BLACK.into()),
+                        (ResultPlayer::White, CELL_COLOR_PLAYER_WHITE.into()),
+                    ]
+                    .into_iter()
+                    .collect(),
                 },
             },
         })

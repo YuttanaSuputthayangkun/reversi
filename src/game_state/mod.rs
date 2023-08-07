@@ -22,7 +22,7 @@ pub mod plugin {
 pub mod data {
     pub use super::{
         game::data::{Player, Turn},
-        result::data::{ResultData, Settings},
+        result::data::{PlayerType as ResultPlayer, ResultData, Settings},
     };
 }
 

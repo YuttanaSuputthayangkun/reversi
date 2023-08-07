@@ -61,10 +61,9 @@ pub mod plugin {
 }
 
 pub mod data {
-    use bevy::{prelude::Color, ui::BackgroundColor, utils::HashMap};
+    use bevy::{prelude::Color, utils::HashMap};
 
-    pub(super) const FONT_SIZE: f32 = 20.;
-    pub(super) const TEXT_COLOR: Color = Color::GREEN;
+    pub(super) const FONT_SIZE: f32 = 50.;
 
     #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
     pub enum PlayerType {
@@ -96,7 +95,8 @@ pub mod data {
 
     #[derive(Debug, Clone)]
     pub struct Settings {
-        pub color_background: BackgroundColor,
+        pub text_color: Color,
+        pub player_color_map: HashMap<PlayerType, Color>,
     }
 }
 
@@ -162,70 +162,54 @@ mod system {
             // spawn ui here
             let mut parent = commands.spawn(NodeBundle {
                 style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
                     width: Val::Percent(100.),
                     height: Val::Percent(100.),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
                     ..default()
                 },
-                background_color: settings.color_background,
                 ..default()
             });
             entities.push(parent.id());
 
-            let font = asset_server.load::<Font, _>("fonts/NotoSans-Regular.ttf");
-
-            let mut content = parent.with_children(|builder| {
-                builder.spawn(NodeBundle {
-                    style: Style {
-                        flex_direction: FlexDirection::Column, //check if this works
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    ..default()
-                });
-            });
-
-            // add scores
-            const SCORE_MARGIN: UiRect = UiRect {
-                left: Val::Px(30.),
-                right: Val::Px(30.),
-                top: Val::Px(30.),
-                bottom: Val::Px(30.),
-            };
-            for (player, score) in event.scores.iter() {
-                content.with_children(|builder| {
-                    builder.spawn(
-                        TextBundle::from_section(
-                            format!("{} : {}", player.deref(), score.deref()),
-                            TextStyle {
-                                font: font.clone(),
-                                font_size: data::FONT_SIZE,
-                                color: data::TEXT_COLOR,
-                            },
-                        )
-                        .with_style(Style {
-                            margin: SCORE_MARGIN,
-                            ..default()
-                        }),
-                    );
-                });
-            }
-
-            const BUTTON_BACKGROUND_COLOR: BackgroundColor = BackgroundColor(Color::ORANGE);
-            content.with_children(|builder| {
-                builder
-                    .spawn(ButtonBundle {
-                        background_color: BUTTON_BACKGROUND_COLOR,
+            parent.with_children(|builder| {
+                let font = asset_server.load::<Font, _>("fonts/NotoSans-Regular.ttf");
+                let button_data = [
+                    (data::PlayerType::Black, data::ButtonType::Proceed),
+                    (data::PlayerType::White, data::ButtonType::Proceed),
+                ];
+                for (player_type, button_type) in button_data.into_iter() {
+                    let score = event.scores.get(&player_type).unwrap();
+                    let color = settings.player_color_map.get(&player_type).unwrap().clone();
+                    let button_bundle = ButtonBundle {
+                        background_color: color.into(),
                         style: Style {
-                            width: Val::Px(100.), // add const
-                            height: Val::Px(30.),
+                            display: Display::Flex,
+                            flex_grow: score.clone() as f32,
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
                             ..default()
                         },
                         ..default()
-                    })
-                    .insert(component::ButtonType(data::ButtonType::Proceed));
+                    };
+                    let text_bundle = TextBundle::from_section(
+                        format!("{}", score).to_string(),
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: data::FONT_SIZE,
+                            color: settings.text_color.into(),
+                        },
+                    )
+                    .with_style(Style { ..default() });
+                    let new_button = builder
+                        .spawn(button_bundle)
+                        .with_children(|x| {
+                            x.spawn(text_bundle);
+                        })
+                        .insert(component::ButtonType(button_type))
+                        .id();
+                    entities.push(new_button);
+                }
             });
 
             Ok(())
