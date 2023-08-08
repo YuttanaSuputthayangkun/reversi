@@ -1,7 +1,7 @@
 # Bevy Reversi Project
 
-![screenshot1](screenshot_01.png)
-![screenshot1](screenshot_02.png)
+![screenshot1](screenshots/screenshot_01.png)
+![screenshot1](screenshots/screenshot_02.png)
 
 ## Introduction
 
