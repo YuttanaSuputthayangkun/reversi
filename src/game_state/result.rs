@@ -26,6 +26,9 @@ pub mod plugin {
                 .add_systems(
                     Update,
                     (
+                        // show_result_screen should run only once and doesn't need to be in update schedule.
+                        // But it seems, sometimes the run condition is not triggered properly.
+                        // Probably because of how event is sent. further investigation required.
                         system::show_result_screen
                             .pipe(system_adapter::error)
                             .run_if(

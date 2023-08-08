@@ -377,27 +377,33 @@ pub fn check_win_condition(
             .into_iter()
             .map(|(player, group)| (player, group.count()))
             .collect();
+        info!("cell_count_map : {:?}", &cell_count_map);
 
-        result_event_writer.send(result::event::ResultEvent(result::data::ResultData {
-            scores: [
-                (
-                    result::data::PlayerType::White,
-                    cell_count_map
-                        .get(&data::Player::White)
-                        .cloned()
-                        .unwrap_or_default() as u16,
-                ),
-                (
-                    result::data::PlayerType::Black,
-                    cell_count_map
-                        .get(&data::Player::Black)
-                        .cloned()
-                        .unwrap_or_default() as u16,
-                ),
-            ]
-            .into_iter()
-            .collect(),
-        }));
+        let result_score = [
+            (
+                result::data::PlayerType::White,
+                cell_count_map
+                    .get(&data::Player::White)
+                    .cloned()
+                    .unwrap_or_default() as u16,
+            ),
+            (
+                result::data::PlayerType::Black,
+                cell_count_map
+                    .get(&data::Player::Black)
+                    .cloned()
+                    .unwrap_or_default() as u16,
+            ),
+        ]
+        .into_iter()
+        .collect();
+        info!("result_score : {:?}", &result_score);
+
+        let result_event = result::event::ResultEvent(result::data::ResultData {
+            scores: result_score,
+        });
+
+        result_event_writer.send(result_event);
     }
 }
 

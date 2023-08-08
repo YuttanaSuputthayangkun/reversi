@@ -56,13 +56,6 @@ const CELL_COLOR_BACKGROUND: Color = Color::Rgba {
     blue: 145. / 256.,
     alpha: 1.,
 };
-
-// const RESULT_BACKGROUND_COLOR: Color = Color::Rgba {
-//     red: 0.5,
-//     green: 0.5,
-//     blue: 0.5,
-//     alpha: 0.5,
-// };
 const RESULT_TEXT_COLOR: Color = Color::Rgba {
     red: 0.5,
     green: 0.5,
