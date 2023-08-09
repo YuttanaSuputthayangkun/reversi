@@ -1,9 +1,11 @@
 name: Release
 
-on:
-  push:
-    branches:
-      - 'releases/**'
+# on:
+  # push:
+  #   branches:
+  #     - 'releases/**'
+
+on: workflow_dispatch
 
 env:
   # update with the name of the main binary
