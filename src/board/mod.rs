@@ -1,5 +1,5 @@
-mod board;
 mod builder;
+mod inner_board;
 mod iterator;
 mod position;
 mod size;
@@ -7,8 +7,8 @@ mod size;
 #[cfg(test)]
 mod test;
 
-pub use board::*;
 pub use builder::*;
+pub use inner_board::*;
 pub use iterator::*;
 pub use position::*;
 pub use size::*;

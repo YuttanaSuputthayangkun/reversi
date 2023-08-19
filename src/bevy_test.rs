@@ -13,7 +13,7 @@ fn world() {
     world.insert_resource(MyResource(0));
     let mut schedule = Schedule::new();
     fn increase_number(mut res: ResMut<MyResource>) {
-        res.0 = res.0 + 1;
+        res.0 += 1;
     }
     schedule.add_systems(increase_number);
     schedule.run(&mut world);

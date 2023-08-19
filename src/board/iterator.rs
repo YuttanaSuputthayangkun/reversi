@@ -1,4 +1,4 @@
-use super::{Board, BoardPosition, Direction, Magnitude};
+use super::{inner_board::Board, BoardPosition, Direction, Magnitude};
 
 #[derive(Default)]
 enum State {
@@ -30,10 +30,10 @@ where
         step: Magnitude,
     ) -> IterMut<'a, Cell> {
         IterMut {
-            board: board,
+            board,
             position: pos,
             direction,
-            step: step,
+            step,
             state: State::NotStarted,
         }
     }
@@ -59,7 +59,7 @@ where
             NotStarted => {
                 self.state = Started;
                 self.position.apply_direction(&self.direction, self.step);
-                let position = self.position.clone();
+                let position = self.position;
                 let result = self.current_cell_mut();
                 result.map(|c| unsafe {
                     (
@@ -70,7 +70,7 @@ where
             }
             Started => {
                 self.position.apply_direction(&self.direction, self.step);
-                let position = self.position.clone();
+                let position = self.position;
                 let result = self.current_cell_mut().map(|c| unsafe {
                     (
                         position,
@@ -109,10 +109,10 @@ where
         step: Magnitude,
     ) -> Iter<'a, Cell> {
         Iter {
-            board: board,
+            board,
             position: pos,
             direction,
-            step: step,
+            step,
             state: State::NotStarted,
         }
     }
@@ -138,7 +138,7 @@ where
             NotStarted => {
                 self.state = Started;
                 self.position.apply_direction(&self.direction, self.step);
-                let position = self.position.clone();
+                let position = self.position;
                 let result = self.current_cell();
                 result.map(|c| unsafe {
                     (
@@ -155,7 +155,7 @@ where
                 if result.is_none() {
                     self.state = End;
                 }
-                result.map(|c| (self.position.clone(), c))
+                result.map(|c| (self.position, c))
             }
             End => None,
         }
@@ -184,7 +184,7 @@ mod test {
         let iter = IterMut::new(&mut board, BoardPosition { x: 0, y: 0 }, Direction::Up, 1);
         iter.for_each(|(_, c)| *c = Some(()));
         let board2 = Board {
-            size: size.clone(),
+            size,
             cells: {
                 let mut map = HashMap::<BoardPosition, Cell>::new();
                 map.insert((0, 0).into(), None);

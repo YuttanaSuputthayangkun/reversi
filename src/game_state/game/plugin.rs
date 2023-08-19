@@ -12,8 +12,8 @@ pub struct GamePlugin {
 impl GamePlugin {
     pub fn new(first_turn: data::Turn, board_settings: data::BoardSettings) -> Self {
         GamePlugin {
-            first_turn: first_turn,
-            board_settings: board_settings,
+            first_turn,
+            board_settings,
         }
     }
 }

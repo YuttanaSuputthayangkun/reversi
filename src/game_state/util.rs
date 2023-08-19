@@ -10,7 +10,7 @@ pub struct Entities<Marker>(PhantomData<Marker>, #[deref] Vec<Entity>);
 
 impl<Marker> IterEntity for Entities<Marker> {
     fn iter_entity(&self) -> Box<dyn Iterator<Item = Entity> + '_> {
-        let iter = self.1.iter().map(|x| x.clone());
+        let iter = self.1.iter().copied();
         Box::new(iter)
     }
 }
@@ -26,7 +26,7 @@ pub fn despawn_entities_and_clear_resource<Resource>(
     Resource: bevy::prelude::Resource + IterEntity,
 {
     for entity in resource.iter_entity() {
-        if let Some(entity) = commands.get_entity(entity.clone()) {
+        if let Some(entity) = commands.get_entity(entity) {
             entity.despawn_recursive();
         }
     }

@@ -16,7 +16,7 @@ use game_state::{
     plugin::{BoardSettings, GamePlugin, GameStatePlugin, ResultPlugin},
 };
 
-const GAME_TITLE: &'static str = "Reversi";
+const GAME_TITLE: &str = "Reversi";
 const WINDOW_RESOLUTION_X: f32 = 1280.;
 const WINDOW_RESOLUTION_Y: f32 = 720.;
 const FIRST_TURN: Turn = Turn::Black;
@@ -102,10 +102,10 @@ fn setup_game() {
             ),
             result_plugin: ResultPlugin {
                 settings: ResultSettings {
-                    text_color: RESULT_TEXT_COLOR.into(),
+                    text_color: RESULT_TEXT_COLOR,
                     player_color_map: [
-                        (ResultPlayer::Black, CELL_COLOR_PLAYER_BLACK.into()),
-                        (ResultPlayer::White, CELL_COLOR_PLAYER_WHITE.into()),
+                        (ResultPlayer::Black, CELL_COLOR_PLAYER_BLACK),
+                        (ResultPlayer::White, CELL_COLOR_PLAYER_WHITE),
                     ]
                     .into_iter()
                     .collect(),

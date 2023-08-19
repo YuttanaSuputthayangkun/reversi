@@ -58,7 +58,6 @@ fn position_pairs<Size: Into<board::PositionUnit> + Copy>(
     board_size_y: Size,
 ) -> Vec<(board::PositionUnit, board::PositionUnit)> {
     (0..board_size_y.into())
-        .map(|y| (0..board_size_x.into()).map(move |x| (x, y)))
-        .flat_map(|x| x)
+        .flat_map(|y| (0..board_size_x.into()).map(move |x| (x, y)))
         .collect()
 }

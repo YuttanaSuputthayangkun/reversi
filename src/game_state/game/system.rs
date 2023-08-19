@@ -34,7 +34,7 @@ pub fn spawn_board_ui(
                 ..default()
             },
             background_color: board_settings
-                .board_player_color(&Into::<data::Player>::into(game_data.turn().clone()))
+                .board_player_color(&Into::<data::Player>::into(*game_data.turn()))
                 .into(),
             ..default()
         })
@@ -67,10 +67,7 @@ pub fn spawn_board_ui(
                         board_settings.board_size_x().into(),
                         board_settings.board_size_y().into(),
                     ) {
-                        let pos = board::BoardPosition {
-                            x: x.into(),
-                            y: y.into(),
-                        };
+                        let pos = board::BoardPosition { x, y };
                         let cell_entity = spawn_cell(builder, pos, &board_settings);
                         cell_entities.deref_mut().insert(pos, cell_entity);
                     }
@@ -141,13 +138,13 @@ pub fn set_initial_player_cells(
 
     for (pos, mut player) in cells.iter_mut() {
         if let Some(set_player) = initial_cell_positions.get(pos.deref()) {
-            **player = set_player.clone();
+            **player = *set_player;
         }
     }
 
     for (pos, player) in initial_cell_positions.iter() {
         let cell_mut = game_data.board_mut().cell_mut(pos.deref()).unwrap();
-        *cell_mut = player.clone();
+        *cell_mut = *player;
     }
 }
 
@@ -164,7 +161,7 @@ pub fn button_interaction_system(
 ) {
     for (interaction, board_pos, clickable) in interaction_query.iter_mut() {
         if interaction == &Interaction::Pressed && **clickable {
-            cell_click_event.send(event::CellClick(board_pos.deref().clone()));
+            cell_click_event.send(event::CellClick(*board_pos.deref()));
         }
     }
 }
@@ -209,9 +206,9 @@ pub fn change_opposite_player_cells(
             .iter()
             .flat_map(|direction| {
                 let mut iter = board::Iter::new(
-                    &game_data.board(),
+                    game_data.board(),
                     player_cell_changed.board_position,
-                    direction.clone(),
+                    *direction,
                     1,
                 );
 
@@ -275,12 +272,8 @@ pub fn update_cell_clickable(
         }
 
         for direction in board::DIRECTIONS.iter() {
-            let mut iter = board::Iter::new(
-                &game_data.board(),
-                board_position.deref().clone(),
-                direction.clone(),
-                1,
-            );
+            let mut iter =
+                board::Iter::new(game_data.board(), *board_position.deref(), *direction, 1);
 
             // the next cell has to be the opposite player, skip loop if not
             // "if let &&" pattern is not available here
@@ -297,14 +290,13 @@ pub fn update_cell_clickable(
             // check if the cell has empty player
             if let Some((cell_position, data::Player::None)) = iter.next() {
                 let entity = board_entities.get(&cell_position).unwrap();
-                commands
-                    .entity(entity.clone())
-                    .insert(component::Clickable(true)); // todo: check if there's any way to change the component instead of insert
+                commands.entity(*entity).insert(component::Clickable(true)); // todo: check if there's any way to change the component instead of insert
             }
         }
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn change_cell_color(
     mut cells: Query<
         (
@@ -352,7 +344,7 @@ pub fn update_turn(
 }
 
 pub fn any_clickable_cell(query: Query<&component::Clickable>) -> bool {
-    query.iter().find(|&clickable| **clickable).is_some()
+    query.iter().any(|clickable| **clickable)
 }
 
 pub fn check_win_condition(
@@ -373,7 +365,7 @@ pub fn check_win_condition(
             .map(|x| x.deref())
             .cloned()
             .sorted_by(|a, b| a.cmp(b))
-            .group_by(|x| x.clone())
+            .group_by(|x| *x)
             .into_iter()
             .map(|(player, group)| (player, group.count()))
             .collect();
@@ -436,8 +428,8 @@ pub fn change_board_background_color(
     let is_finished: bool =
         if let (Some(timer), Some(begin_color)) = (timer.deref_mut(), begin_color.deref()) {
             // apply color, Bevy doesn't have color lerping now, so I use Vec4's
-            let begin_color: Vec4 = begin_color.clone().into();
-            let target_player: data::Player = game_data.turn().clone().into();
+            let begin_color: Vec4 = (*begin_color).into();
+            let target_player: data::Player = (*game_data.turn()).into();
             let target_color: Vec4 = board_settings.board_player_color(&target_player).into();
             let (r, g, b, _) = begin_color.lerp(target_color, timer.percent()).into();
             *background_color = Color::rgba(r, g, b, 1.).into();

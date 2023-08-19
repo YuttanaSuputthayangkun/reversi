@@ -23,7 +23,7 @@ impl Builder {
     }
 
     pub fn build<Cell: Default>(self) -> BuildResult<Cell> {
-        let size = self.size.ok_or_else(|| BuildError::MissingSize)?;
+        let size = self.size.ok_or(BuildError::MissingSize)?;
         let board = Board::<Cell>::new(size);
         BuildResult::Ok(board)
     }

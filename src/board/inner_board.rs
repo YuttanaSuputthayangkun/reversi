@@ -27,10 +27,7 @@ impl<Cell: Default> Board<Cell> {
                 panic!("Fail to insert cell at ({:?}), this shouldn't happen!", p);
             }
         }
-        Board {
-            size: s,
-            cells: cells,
-        }
+        Board { size: s, cells }
     }
 
     pub fn cell_ref<'a>(&'a self, p: &BoardPosition) -> Option<&'a Cell> {
@@ -45,7 +42,7 @@ impl<Cell: Default> Board<Cell> {
 impl<Cell: Clone + Default> Clone for Board<Cell> {
     fn clone(&self) -> Self {
         Self {
-            size: self.size.clone(),
+            size: self.size,
             cells: self.cells.clone(),
         }
     }

@@ -18,9 +18,9 @@ impl BoardSize {
     }
 }
 
-impl Into<u16> for BoardSize {
-    fn into(self) -> u16 {
-        self.0.into()
+impl From<BoardSize> for u16 {
+    fn from(val: BoardSize) -> Self {
+        val.0
     }
 }
 
@@ -57,8 +57,8 @@ impl BoardSettings {
         board_player_color_change_duration: Duration,
     ) -> Self {
         BoardSettings {
-            board_size_x: board_size_x,
-            board_size_y: board_size_y,
+            board_size_x,
+            board_size_y,
             cell_color_clickable,
             cell_player_color_map: cell_player_colors.collect::<HashMap<_, _>>(),
             cell_color_background,
@@ -86,7 +86,7 @@ impl BoardSettings {
     pub fn cell_player_color(&self, player: &Player) -> Color {
         self.cell_player_color_map
             .get(player)
-            .map(|c| c.clone())
+            .copied()
             .ok_or_else(|| format!("Cannot find cell color for player: {:?}", &player))
             .unwrap()
     }
@@ -94,7 +94,7 @@ impl BoardSettings {
     pub fn board_player_color(&self, player: &Player) -> Color {
         self.board_player_color_map
             .get(player)
-            .map(|c| c.clone())
+            .copied()
             .ok_or_else(|| format!("Cannot find cell color for player: {:?}", &player))
             .unwrap()
     }
@@ -144,9 +144,9 @@ impl Turn {
     }
 }
 
-impl Into<Player> for Turn {
-    fn into(self) -> Player {
-        match self {
+impl From<Turn> for Player {
+    fn from(val: Turn) -> Self {
+        match val {
             Turn::Black => Player::Black,
             Turn::White => Player::White,
         }
@@ -170,14 +170,13 @@ pub struct GameData {
 
 impl GameData {
     pub fn new(first_turn: Turn, board_size_x: BoardSize, board_size_y: BoardSize) -> Self {
-        let size =
-            board::Size::new(board_size_x.size().into(), board_size_y.size().into()).unwrap();
+        let size = board::Size::new(board_size_x.size(), board_size_y.size()).unwrap();
         let board = Board::new(size);
         GameData {
-            first_turn: first_turn,
+            first_turn,
             turn: first_turn,
             turn_count: 0,
-            board: board,
+            board,
             turn_stuck_info_list: vec![],
         }
     }
@@ -228,9 +227,9 @@ impl GameData {
     }
 
     pub fn reset(&mut self) {
-        self.turn = self.first_turn.clone();
+        self.turn = self.first_turn;
         self.turn_count = 0;
-        self.board = Board::new(self.board.size.clone());
+        self.board = Board::new(self.board.size);
         self.turn_stuck_info_list = vec![];
     }
 }

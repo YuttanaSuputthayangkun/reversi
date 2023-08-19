@@ -181,12 +181,12 @@ mod system {
                 ];
                 for (player_type, button_type) in button_data.into_iter() {
                     let score = event.scores.get(&player_type).unwrap();
-                    let color = settings.player_color_map.get(&player_type).unwrap().clone();
+                    let color = *settings.player_color_map.get(&player_type).unwrap();
                     let button_bundle = ButtonBundle {
                         background_color: color.into(),
                         style: Style {
                             display: Display::Flex,
-                            flex_grow: score.clone() as f32,
+                            flex_grow: *score as f32,
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             ..default()
@@ -198,7 +198,7 @@ mod system {
                         TextStyle {
                             font: font.clone(),
                             font_size: data::FONT_SIZE,
-                            color: settings.text_color.into(),
+                            color: settings.text_color,
                         },
                     );
                     let new_button = builder
@@ -224,7 +224,7 @@ mod system {
     ) {
         let button_press = query
             .iter()
-            .find(|(ref interaction, _)| (**interaction).eq(&Interaction::Pressed));
+            .find(|(interaction, _)| (*interaction).eq(&Interaction::Pressed));
         if let Some((_, button_type)) = button_press {
             event_writer.send(button_type.deref().to_owned().into());
         }
