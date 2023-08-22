@@ -1,4 +1,5 @@
 use bevy::prelude::{Plugin, States};
+use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]
 mod util;
@@ -30,6 +31,7 @@ pub mod event {
     pub use super::result::event::ResultEvent;
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct GameStatePlugin {
     pub game_plugin: game::plugin::GamePlugin,
     pub result_plugin: result::plugin::ResultPlugin,

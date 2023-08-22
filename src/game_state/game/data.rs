@@ -2,6 +2,7 @@ use bevy::{
     prelude::{Color, Deref},
     utils::HashMap,
 };
+use serde::{Deserialize, Serialize};
 
 use super::*;
 use std::{ops::Rem, time::Duration};
@@ -9,7 +10,7 @@ use std::{ops::Rem, time::Duration};
 pub type BoardCell = data::Player;
 pub type Board = board::Board<BoardCell>;
 
-#[derive(Clone, Copy, Debug, Deref)]
+#[derive(Clone, Copy, Debug, Deref, Serialize, Deserialize)]
 pub struct BoardSize(u16);
 
 impl BoardSize {
@@ -35,7 +36,7 @@ impl TryFrom<u16> for BoardSize {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct BoardSettings {
     board_size_x: BoardSize,
     board_size_y: BoardSize,
@@ -47,6 +48,7 @@ pub struct BoardSettings {
 }
 
 impl BoardSettings {
+    #[allow(dead_code)]
     pub fn new(
         board_size_x: BoardSize,
         board_size_y: BoardSize,
@@ -109,7 +111,9 @@ pub struct CellData {
     pub position: board::BoardPosition,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
 pub enum Player {
     #[default]
     None,
@@ -128,7 +132,7 @@ impl Player {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Turn {
     Black,
     White,

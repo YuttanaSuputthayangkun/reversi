@@ -1,0 +1,111 @@
+{
+  "game_plugin": {
+    "first_turn": "Black",
+    "board_settings": {
+      "board_size_x": 8,
+      "board_size_y": 8,
+      "cell_color_clickable": {
+        "Rgba": {
+          "red": 1.0,
+          "green": 0.0,
+          "blue": 0.0,
+          "alpha": 1.0
+        }
+      },
+      "cell_player_color_map": {
+        "Black": {
+          "Rgba": {
+            "red": 0.0,
+            "green": 0.0,
+            "blue": 0.0,
+            "alpha": 1.0
+          }
+        },
+        "None": {
+          "Rgba": {
+            "red": 0.1171875,
+            "green": 0.5,
+            "blue": 0.0,
+            "alpha": 1.0
+          }
+        },
+        "White": {
+          "Rgba": {
+            "red": 1.0,
+            "green": 1.0,
+            "blue": 1.0,
+            "alpha": 1.0
+          }
+        }
+      },
+      "cell_color_background": {
+        "Rgba": {
+          "red": 0.56640625,
+          "green": 0.56640625,
+          "blue": 0.56640625,
+          "alpha": 1.0
+        }
+      },
+      "board_player_color_map": {
+        "Black": {
+          "Rgba": {
+            "red": 0.2,
+            "green": 0.2,
+            "blue": 0.2,
+            "alpha": 1.0
+          }
+        },
+        "None": {
+          "Rgba": {
+            "red": 0.5,
+            "green": 0.5,
+            "blue": 0.5,
+            "alpha": 1.0
+          }
+        },
+        "White": {
+          "Rgba": {
+            "red": 0.6,
+            "green": 0.6,
+            "blue": 0.6,
+            "alpha": 1.0
+          }
+        }
+      },
+      "board_player_color_change_duration": {
+        "secs": 1,
+        "nanos": 0
+      }
+    }
+  },
+  "result_plugin": {
+    "settings": {
+      "text_color": {
+        "Rgba": {
+          "red": 0.5,
+          "green": 0.5,
+          "blue": 0.5,
+          "alpha": 0.5
+        }
+      },
+      "player_color_map": {
+        "White": {
+          "Rgba": {
+            "red": 1.0,
+            "green": 1.0,
+            "blue": 1.0,
+            "alpha": 1.0
+          }
+        },
+        "Black": {
+          "Rgba": {
+            "red": 0.0,
+            "green": 0.0,
+            "blue": 0.0,
+            "alpha": 1.0
+          }
+        }
+      }
+    }
+  }
+}

@@ -5,11 +5,12 @@ use super::util;
 use super::GameState;
 
 pub mod plugin {
-    use crate::game_state::util::despawn_entities_and_clear_resource;
+    use serde::{Deserialize, Serialize};
 
     use super::*;
+    use crate::game_state::util::despawn_entities_and_clear_resource;
 
-    #[derive(Clone)]
+    #[derive(Clone, Deserialize, Serialize)]
     pub struct ResultPlugin {
         pub settings: data::Settings,
     }
@@ -63,10 +64,11 @@ pub mod plugin {
 
 pub mod data {
     use bevy::{prelude::Color, utils::HashMap};
+    use serde::{Deserialize, Serialize};
 
     pub(super) const FONT_SIZE: f32 = 100.;
 
-    #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+    #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
     pub enum PlayerType {
         Black,
         White,
@@ -94,7 +96,7 @@ pub mod data {
         Proceed,
     }
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Settings {
         pub text_color: Color,
         pub player_color_map: HashMap<PlayerType, Color>,

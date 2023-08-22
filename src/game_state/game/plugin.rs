@@ -1,14 +1,16 @@
 use crate::game_state::util::*;
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use super::*;
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GamePlugin {
     first_turn: data::Turn,
     board_settings: data::BoardSettings,
 }
 
+#[allow(dead_code)]
 impl GamePlugin {
     pub fn new(first_turn: data::Turn, board_settings: data::BoardSettings) -> Self {
         GamePlugin {
