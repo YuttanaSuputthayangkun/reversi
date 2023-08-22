@@ -38,8 +38,8 @@ impl From<serde_json::Error> for LoadPluginError {
     }
 }
 
-fn load_game_state_plugin() -> Result<GameStatePlugin, LoadPluginError> {
-    let file = std::fs::File::open(GAME_SETTINGS_PATH)?;
+fn load_game_state_plugin(path: &str) -> Result<GameStatePlugin, LoadPluginError> {
+    let file = std::fs::File::open(path)?;
     let reader = std::io::BufReader::new(file);
     let game_state_plugin = serde_json::from_reader(reader)?;
     Ok(game_state_plugin)
@@ -55,6 +55,6 @@ fn setup_game() {
             }),
             ..default()
         }))
-        .add_plugins(load_game_state_plugin().unwrap())
+        .add_plugins(load_game_state_plugin(GAME_SETTINGS_PATH).unwrap())
         .run();
 }
