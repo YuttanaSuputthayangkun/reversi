@@ -500,7 +500,7 @@ pub(super) mod debug {
             };
 
             if let Some(pos) = clickable_pos {
-                cell_click_event_writer.send(event::CellClick(pos.deref().clone()));
+                cell_click_event_writer.send(event::CellClick(**pos));
 
                 timer.reset();
             }
